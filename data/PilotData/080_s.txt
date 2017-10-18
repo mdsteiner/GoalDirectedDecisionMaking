@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_080"	21	1	1	"Repeatedly click on the boxes that rewarded well."	"At first I tried clicking multiple boxes, but that didn't work well."	2	1	NA	1	NA	2	2	2	2	20	2	5	2	1	1	NA	1	NA

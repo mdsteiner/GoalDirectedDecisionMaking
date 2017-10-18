@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_047"	25	1	1	"Went off my gut feelings"	"I did not."	1	1	"Understood everything"	1	NA	2	2	2	2	25	2	5	4	1	1	NA	1	NA

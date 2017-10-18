@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"attention.clicks"	"instructions.clear"	"similar.task"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"foundHIT"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_433"	24	2	3	"I tried ti gain the most so if one was giving negative points I went with the other"	"no"	1	NA	1	2	NA	1	NA	1	2	2	2	30	2	3	5	3	1	1	"I read the instrustions"	1	NA

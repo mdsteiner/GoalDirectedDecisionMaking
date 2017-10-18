@@ -1,0 +1,225 @@
+[1] "PT RL model"
+[1] ""
+[1] "Goal choose risky"
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: high.var.chosen ~ choose.highvar.subj.pt.rl + (1 | game) + (1 |  
+    id.f)
+   Data: subset(df.trial, goal.condition == "Goal" & game > 1)
+
+     AIC      BIC   logLik deviance df.resid 
+ 58906.2  58941.2 -29449.1  58898.2    47246 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.0248 -0.8066 -0.5120  0.9832  3.5564 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ id.f   (Intercept) 0.345477 0.58777 
+ game   (Intercept) 0.005869 0.07661 
+Number of obs: 47250, groups:  id.f, 189; game, 10
+
+Fixed effects:
+                          Estimate Std. Error z value Pr(>|z|)    
+(Intercept)               -0.91901    0.05191  -17.70   <2e-16 ***
+choose.highvar.subj.pt.rl  0.77777    0.02116   36.75   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr)
+chs.hghv... -0.257
+[1] "Tjurs D:"
+Tjur's D: 0.1065
+                                2.5 %     97.5 %
+.sig01                     0.52140502  0.6472872
+.sig02                     0.03228238  0.1108894
+(Intercept)               -1.02041937 -0.8107226
+choose.highvar.subj.pt.rl  0.73746389  0.8163819
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: high.var.chosen ~ choose.highvar.subj.pt.rl + (1 | id.f/game)
+   Data: subset(df.trial, goal.condition == "Goal" & game > 1)
+
+     AIC      BIC   logLik deviance df.resid 
+ 55556.2  55591.3 -27774.1  55548.2    47246 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.9843 -0.7259 -0.3869  0.8346  4.0311 
+
+Random effects:
+ Groups    Name        Variance Std.Dev.
+ game:id.f (Intercept) 0.9010   0.9492  
+ id.f      (Intercept) 0.4259   0.6526  
+Number of obs: 47250, groups:  game:id.f, 1890; id.f, 189
+
+Fixed effects:
+                          Estimate Std. Error z value Pr(>|z|)    
+(Intercept)               -0.83508    0.05557  -15.03   <2e-16 ***
+choose.highvar.subj.pt.rl  0.54176    0.02509   21.59   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr)
+chs.hghv... -0.274
+[1] "Tjurs D:"
+Tjur's D: 0.2206
+                               2.5 %     97.5 %
+.sig01                     0.8996366  0.9836671
+.sig02                     0.5655529  0.7249212
+(Intercept)               -0.9417514 -0.7320300
+choose.highvar.subj.pt.rl  0.4935523  0.5967675
+[1] ""
+[1] "No Goal choose risky"
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: high.var.chosen ~ choose.highvar.subj.pt.rl + (1 | game) + (1 |  
+    id.f)
+   Data: subset(df.trial, goal.condition == "NoGoal" & game > 1)
+
+     AIC      BIC   logLik deviance df.resid 
+ 68990.9  69026.6 -34491.5  68982.9    55246 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.4464 -0.8047 -0.5021  1.0131  4.4477 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ id.f   (Intercept) 0.503376 0.70949 
+ game   (Intercept) 0.006682 0.08174 
+Number of obs: 55250, groups:  id.f, 221; game, 10
+
+Fixed effects:
+                          Estimate Std. Error z value Pr(>|z|)    
+(Intercept)               -0.71003    0.05633  -12.61   <2e-16 ***
+choose.highvar.subj.pt.rl  0.42133    0.01936   21.77   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr)
+chs.hghv... -0.209
+[1] "Tjurs D:"
+Tjur's D: 0.1042
+                                2.5 %     97.5 %
+.sig01                     0.62858332  0.7744267
+.sig02                     0.03637622  0.1187260
+(Intercept)               -0.82011562 -0.5974261
+choose.highvar.subj.pt.rl  0.38404053  0.4598224
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: high.var.chosen ~ choose.highvar.subj.pt.rl + (1 | id.f/game)
+   Data: subset(df.trial, goal.condition == "NoGoal" & game > 1)
+
+     AIC      BIC   logLik deviance df.resid 
+ 64011.1  64046.8 -32001.5  64003.1    55246 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.7145 -0.7121 -0.3535  0.8266  4.3001 
+
+Random effects:
+ Groups    Name        Variance Std.Dev.
+ game:id.f (Intercept) 1.1233   1.0599  
+ id.f      (Intercept) 0.6455   0.8034  
+Number of obs: 55250, groups:  game:id.f, 2210; id.f, 221
+
+Fixed effects:
+                          Estimate Std. Error z value Pr(>|z|)    
+(Intercept)               -0.60871    0.06118  -9.950  < 2e-16 ***
+choose.highvar.subj.pt.rl  0.14715    0.02379   6.187 6.14e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr)
+chs.hghv... -0.231
+[1] "Tjurs D:"
+Tjur's D: 0.2387
+                               2.5 %     97.5 %
+.sig01                     1.0048328  1.1004230
+.sig02                     0.7032114  0.8932959
+(Intercept)               -0.7245745 -0.4806513
+choose.highvar.subj.pt.rl  0.1016483  0.1973592
+[1] ""
+[1] "Prediction Accuracy"
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: pred.RSF.acc.pt.rl ~ goal.condition.f + (1 | game) + (1 | id.f)
+   Data: subset(df.trial, game > 1 & pred.EV.pt.rl != pred.RSF.pt.rl)
+
+     AIC      BIC   logLik deviance df.resid 
+ 65951.6  65987.0 -32971.8  65943.6    52124 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.8256 -0.7686 -0.5791  1.0593  3.6826 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ id.f   (Intercept) 0.42481  0.6518  
+ game   (Intercept) 0.02845  0.1687  
+Number of obs: 52128, groups:  id.f, 410; game, 10
+
+Fixed effects:
+                       Estimate Std. Error z value Pr(>|z|)    
+(Intercept)            -0.31970    0.07278  -4.393 1.12e-05 ***
+goal.condition.fNoGoal -0.31062    0.06750  -4.601 4.20e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr)
+gl.cndtn.NG -0.499
+[1] "Tjurs D:"
+Tjur's D: 0.0868
+                             2.5 %     97.5 %
+.sig01                  0.60237594  0.6993011
+.sig02                  0.08785942  0.2399774
+(Intercept)            -0.47260821 -0.1762579
+goal.condition.fNoGoal -0.43931801 -0.1568587
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: pred.RSF.acc.pt.rl ~ goal.condition.f + (1 | id.f/game)
+   Data: subset(df.trial, game > 1 & pred.EV.pt.rl != pred.RSF.pt.rl)
+
+     AIC      BIC   logLik deviance df.resid 
+ 63120.9  63156.3 -31556.4  63112.9    52124 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.0004 -0.6965 -0.4470  0.8497  3.5947 
+
+Random effects:
+ Groups    Name        Variance Std.Dev.
+ game:id.f (Intercept) 0.8765   0.9362  
+ id.f      (Intercept) 0.4269   0.6534  
+Number of obs: 52128, groups:  game:id.f, 4074; id.f, 410
+
+Fixed effects:
+                       Estimate Std. Error z value Pr(>|z|)    
+(Intercept)            -0.31894    0.05485  -5.814 6.09e-09 ***
+goal.condition.fNoGoal -0.34825    0.07476  -4.658 3.19e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr)
+gl.cndtn.NG -0.734
+[1] "Tjurs D:"
+Tjur's D: 0.2062
+                            2.5 %     97.5 %
+.sig01                  0.8773140  0.9560800
+.sig02                  0.5872700  0.7161008
+(Intercept)            -0.4168558 -0.2178420
+goal.condition.fNoGoal -0.5068424 -0.1976295

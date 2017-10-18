@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"attention.clicks"	"instructions.clear"	"similar.task"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"foundHIT"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_474"	53	1	4	"I alternated sometimes and when I had a big loss I generally stayed away from that box for the duration of the game."	"Basically the same"	1	2	1	2	NA	1	NA	2	2	2	2	30	2	5	3	1	1	1	NA	4	2

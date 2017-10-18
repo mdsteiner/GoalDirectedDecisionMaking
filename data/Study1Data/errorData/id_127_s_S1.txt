@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"attention.clicks"	"instructions.clear"	"similar.task"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"foundHIT"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_127"	26	1	5	"I had no strategy. It was random to me"	"sometimes i tried clicking the same box several times"	2	0	1	2	NA	1	NA	3	2	2	2	20	2	5	3	3	1	1	"I read the instructions"	5	2

@@ -1,0 +1,669 @@
+---
+title: "Results EE-goals Study 1"
+author: "Markus Steiner"
+date: "22 Juli 2017"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(dplyr)
+library(coin)
+library(afex)
+library(lme4)
+library(yarrr)
+```
+
+# Getting what you came for: Decisions under uncertainty with a goal.
+
+This study investigated the influence of a minimum aspiration level (goal) in a bandit task on participants' behavior. The study had a 2 x 3 between subjects design with the following conditions:
+
+* **Goal condition**:
+    + No Goal
+    + Goal of 100 points
+
+* **Variance condition:**
+    + Equal (Equal EVs, different variance)
+    + Low (High EV option has low variance)
+    + High (High EV option has high variance)
+ 
+Means and standard deviations of the conditions were the following:
+
+| Condition                             | 1                    | 2                   |
+|---------------------------------------|----------------------|---------------------|
+| Equal: Same EV; Different Variance           | mean = 4; sd = 2.5   | mean = 4; sd = 11   |
+| Low:  Different EV, High Variance = low EV  | mean = 4; sd = 2.5   | mean = 2.5; sd = 11 |
+| High: Different EV, High Variance = high EV | mean = 2.5; sd = 2.5 | mean = 4; sd =11    |
+Table: Means and standard deviations of the three environments from the variance condition.
+
+
+# Preregistered Hypotheses
+
+This table shows the different hypotheses we preregistered and whether they were supported by our data or not.
+
+| Index               | Hypothesis         | Supported?           | Notes             |
+|--------------|---------------|---------------|---------------|
+|1 | The probability of selecting the high-variance option given that one is *below* the goal of 100 points, is *higher* in the goal than in the no goal condition. | Yes | OR of 1.49, significance only just reached.|
+|2 | The probability of selecting the high-variance option given that one is *above* the goal is *lower* in the goal than in the no goal condition. | Yes |  |
+|3 | The probability of selecting the high-variance option in the *goal* condition is higher, when it is rational to do so according to our RSF model. | Yes | |
+|4 | The probability of selecting the high-variance option in the *no goal* condition is higher, when it is rational to do so according to our RSF model with a hypothetical goal. The effect is smaller than the one in hypothesis 3. | Yes | Although the effect is smaller than in hypothesis 3, it is still substantial. We may want to look for a reasonable explanation for this (maybe compare with a plot derived by using the EV strategy for no goal and see if the same effect occurs.) |
+|5 | When the RSF and EV models make differing predictions, the RSF model is correct more often in the goal compared to the no goal condition. | Yes | Still in the goal condition when model predictions differed, RSF was correct only 51.2% of the times, so it may be just chance. |
+|6 | Over all trials, the probability of choosing the high-variance option is higher in the goal than in the no goal condition. | No | The wrong prediction may have to do with inaccurately chosen parameters in the simulation |
+|7 | The probability of reaching 100 points is higher in the goal than in the no goal condition. | No | If there was an effect, we didn't have enough power to detect it (r = .09, p = .07). |
+|8 | The number of points earned is, on average, highest in the Equal EV condition. | Yes | This is more like a sanity check. If this wasn't true we' have had to think about whether our manipulation worked. |
+|9 | There is no difference between goal and no goal condition in the proportion of strategy use (either EV or RSF strategy) reported. | No | Not one of my brightest moments. I derived the predictions from our simulations and did the same for the survey data without considering that I randomly generated the survey data. |
+|10 | In the Equal variance condition, most participants indicate that they think that both options gave the same number of points on average. | No | |
+|11 | In the High variance condition, most participants indicate that they think that the option with the higher point variability also had higher values on average. | No | |
+|12 | In the Low variance condition, most participants indicate that they think that the option with the lower point variability had higher values on average. | Yes | In all variance conditions the option with the high variability was thought to have the highest values on average. |
+|13 | Participants in the goal condition find it harder (subjectively) to earn points than those in the no goal condition. | Yes | |
+
+
+# Preregistered Analyses
+
+## Game Data
+
+Let's first look at the game data, i.e. the focus is on the behavioral data from the bandit task.
+
+```{r}
+# load study data
+df.trial <- readRDS("data/Study1Data/useData/S1_dataTrialLevel.rds")
+df.game <- readRDS("data/Study1Data/useData/S1_dataGameLevel.rds")
+df.participant <- readRDS("data/Study1Data/useData/S1_dataParticipantLevel.rds")
+
+# load simulation data
+df.trial.s <- readRDS("data/SimulationData/useData/S1_dataTrialLevel.rds")
+df.game.s <- readRDS("data/SimulationData/useData/S1_dataGameLevel.rds")
+df.participant.s <- readRDS("data/SimulationData/useData/S1_dataParticipantLevel.rds")
+
+# check how many participants there were per condition
+kable(table(df.participant$goal.condition, df.participant$variance.condition))
+```
+
+### Proportion of high-variance options chosen given that one is under the goal
+
+First we hypothesized that the probability of selecting the high-variance option given that one is *below* 100 points is *higher* in the goal than in the no goal condition. To test this we ran a logistic mixed effects model with the variance condition and the goal condition as fixed and the game number aswell as participant as random effect.
+
+```{r}
+## Check the probability of selecting high-variance option given that one is BELOW 100 points
+
+m.rug <- lme4::glmer(high.var.chosen ~ variance.condition + goal.condition + (1|game) + (1|id),
+               data = subset(df.trial, overGoal == 0 & game > 1), family = binomial)
+
+summary(m.rug)
+
+confint.merMod(m.rug, method = "Wald", parallel = "multicore")
+```
+
+As predicted, the high variance option is chosen less often (OR = `r round(exp(m.rug@beta[4]), 2)`) than the goal condition ($z = -1.97, p = .049$). Additionally there were effects of the variance condition on the likelyhood of choosing the high variance option ($OR_{High vs Equal}$ = `r round(exp(m.rug@beta[2]), 2)`, $z = 5.17, p < .001$; $OR_{Low vs Equal}$ = `r round(exp(m.rug@beta[3]), 2)` $, z = -3.04, p = .002$). Figure 1 shows that the pattern found in study 1 is compatible with the pattern found in the simulation, although less extreme.
+
+
+```{r, fig.height=10, fig.cap="Figure 1: Proportion of high variance chosen under 100 points separated for goal condition and variance condition. Top: Study data. Bottom: Simulation Data."}
+par(mfrow = c(2,1), mar=c(5,6.7,3,1.5))
+yarrr::pirateplot(risky.ug ~ goal.condition + variance.condition, data = df.participant,
+           ylab = "prop high var chosen", xlab = "Conditions", main = "Risky Under Goal - Study")
+
+yarrr::pirateplot(risky.ug ~ goal.condition + variance.condition, data = df.participant.s,
+           ylab = "prop high var chosen", xlab = "Conditions", main = "Risky Under Goal - Simulation")
+
+```
+
+### Proportion of high-variance options chosen given that one is above the goal
+
+Next we test the hypothesis that the probability of selecting the high-variance option given that one is *above* 100 points is *lower* in the goal than in the no goal condition. I.e, we expect a switch in the pattern of the probability of selecting the high-variance option given that one is *under* the goal. To test this we again ran a logistic mixed effects model with the variance condition and the goal condition as fixed and the game number aswell as participant as random effect.
+
+```{r}
+## Check the probability of selecting high-variance option given that one is ABOVE 100 points
+
+m.rag <- lme4::glmer(high.var.chosen ~ variance.condition + goal.condition + (1|game) + (1|id),
+               data = subset(df.trial, overGoal == 1 & game > 1), family = binomial)
+summary(m.rag)
+
+confint.merMod(m.rag, method = "Wald", parallel = "multicore")
+```
+
+As predicted, the high variance option is chosen less often (OR = `r round(exp(m.rag@beta[4]), 2)`) than the goal condition ($z = 5.85, p < .001$). Additionally there was an effect of the variance condition on the likelyhood of choosing the high variance option ($OR_{High vs Equal}$ = `r round(exp(m.rag@beta[2]), 2)`, $z = 6.40, p < .001$; $OR_{Low vs Equal}$ = `r round(exp(m.rag@beta[3]), 2)`, $z = -1.52, p = .13$). Figure 2 shows that again the pattern found in the study is comparable to the one from the simulations, although, again, less extreme.
+
+
+```{r, fig.height=10, fig.cap="Figure 2: Proportion of high variance chosen over 100 points separated for goal condition and variance condition. Top: Study data. Bottom: Simulation Data."}
+
+par(mfrow = c(2,1), mar=c(5,6.7,3,1.5))
+yarrr::pirateplot(risky.ag ~ goal.condition + variance.condition, data = df.participant,
+           ylab = "prop high var chosen", xlab = "Conditions", main = "Risky Above Goal - Study")
+yarrr::pirateplot(risky.ag ~ goal.condition + variance.condition, data = df.participant.s,
+           ylab = "prop high var chosen", xlab = "Conditions", main = "Risky Above Goal - Simulation")
+
+```
+
+### Proportion of high variance chosen given that it is rational to do so according to RSF
+
+Risk Sensitive Foraging Theory (RSF), makes predictions about which one of possible options should be chosen, given ones relative state to a goal. From this theory we developed a simple model to estimate - given ones current experience - which of the two possible option has the higher likelyhood to reach the goal if one was to pick it for the rest of the game. Let's call choosing this option a rational decision.
+
+Our hypothesis was that in the goal condition the high variance option is chosen more often if, according to our RSF model, it was rational to do so. To test this we again used a logistic mixed effects model, with the RSF model prediction as fixed effect and the game number and participant as random effects.
+
+```{r}
+## With a logistic mixed effects model, check whether, in the goal condition,
+#  the high variance option is chosen more often when it is rational to do
+#  so according to RSF.
+
+m.chv <- lme4::glmer(high.var.chosen ~ choose.highvar.subj + (1|game) + (1|id),
+               data = subset(df.trial, goal.condition == "Goal" & game > 1), family = binomial)
+summary(m.chv)
+
+confint.merMod(m.chv, method = "Wald", parallel = "multicore")
+```
+
+In the goal condition, choosing the high variance option was more likely when it was rational to do so according to our RSF model ($OR$ = `r round(exp(m.chv@beta[2]), 2)`, $z = 42.48$, $p < .001$). Since our simulations showed that there was also a (much smaller) effect in the no goal condition - given that one assumes a hypothetical goal of 100 - we also calculated the same mixed effects model for the no goal condition, with the hypothesis of a much smaller effect.
+
+```{r}
+m.chv.ng <- lme4::glmer(high.var.chosen ~ choose.highvar.subj + (1|game) + (1|id),
+                  data = subset(df.trial, goal.condition == "NoGoal" & game > 1), family = binomial)
+
+summary(m.chv.ng)
+
+confint.merMod(m.chv.ng, method = "Wald", parallel = "multicore")
+```
+
+As predicted the mixed effects model for the no goal condition also showed a positive, but smaller effect of the prediction of our RSF model on whether the high variance option was chosen (OR = `r round(exp(m.chv.ng@beta[2]), 2)`, $z = 31.16$, $p < .001$). Figure 3 shows the effects compared to the simulations. It can be seen that the effect is larger for the goal than the no goal condition in the actual data aswell as the simulation. However the difference between goal and no goal is larger in the simulation.
+
+```{r, fig.height=5, fig.cap="Figure 3: Proportion of high variance chosen separated for conditions and whether it was rational to do so according to our RSF model. Top: Study data. Bottom: Simulation Data.", fig.width= 15}
+# plot this result on participant level
+
+# first aggregate to participant level with choose.highvar as dichotomous variable
+df.n <- aggregate(high.var.chosen ~ choose.highvar.subj + id + goal.condition + variance.condition,
+                  FUN = mean, data = subset(df.trial, game > 1))
+df.n.s <- aggregate(high.var.chosen ~ choose.highvar.subj + id + goal.condition + variance.condition,
+                  FUN = mean, data = subset(df.trial.s, game > 1))
+
+# plot the proportion of high variance chosen separated for the variance, the goal conditions
+# and for whether it was, according to rsf, rational to choose the high variance option
+
+par(mfrow = c(1,1), mar=c(5,7,3,3))
+yarrr::pirateplot(high.var.chosen ~ choose.highvar.subj + variance.condition + goal.condition,
+                  data = df.n, ylab = "prop high var chosen", xlab = "choose high var subj (rsf)",
+                  main = "Proportion of High Variance Chosen Predicted by RSF - Study")
+yarrr::pirateplot(high.var.chosen ~ choose.highvar.subj + variance.condition + goal.condition,
+                  data = df.n.s, ylab = "prop high var chosen", xlab = "choose high var subj (rsf)",
+                  main = "Proportion of High Variance Chosen Predicted by RSF - Simulation")
+
+```
+
+### Prediction accuracy of RSF and EV model when predictions are differing
+
+Our model to predict behavior in the no goal condition was a form of *expected value* (EV) maximization. The options EVs were computed based on the information participants had sampled before.
+
+To test whether the RSF model did a better job in predicting participants behavior in the goal condition vs. the no goal condition, we looked at the RSF model's prediction accuracy in the cases in which the two models made opposing predicitons. We expected that in the goal condition, the RSF model would be more accurate in predicting participants choices, than in the no goal condition.
+
+The two models' predictions differed in, on average, $\Delta_{overall} = 38.7\%$ of the trials (separated per variance condition: $\Delta_{Equal} = 40.7\%$, $\Delta_{Low} = 38.6\%$, $\Delta_{High} = 36.9\%$). 
+
+```{r}
+m.pa <- lme4::glmer(pred.RSF.acc ~ goal.condition + (1|game) + (1|id),
+              data = subset(df.trial, game > 1 & pred.EV != pred.RSF), family = binomial)
+
+summary(m.pa)
+
+confint.merMod(m.pa, method = "Wald", parallel = "multicore")
+```
+
+When the RSF and the EV model make differing predictions, the RSF model is less likely to make the accurate prediction in the no goal compared to the goal condition ($OR = $ `r round(exp(m.pa@beta[2]), 2)`, $z = -5.98$, $p < .001$). In the no goal condition, when the models made differing predictions, RSF was correct in `r round(with(subset(df.trial, game > 1 & goal.condition == "NoGoal"), mean(pred.RSF.acc[pred.EV != pred.RSF], na.rm = TRUE)), 4) * 100`% of the cases, in the goal condition in `r round(with(subset(df.trial, game > 1 & goal.condition == "Goal"), mean(pred.RSF.acc[pred.EV != pred.RSF], na.rm = TRUE)), 4) * 100`% of the cases. Figure 4 shows this pattern, separated also for the variance condition. It can be seen, that the patterns in the simulation and the study data are the same, although more extreme in the simulation data.
+
+```{r, fig.height=10, fig.cap="Figure 4: RSF prediction accuracy rates, separated for goal and variance conditions. Top: Study data. Bottom: Simulation Data."}
+# aggregate using the dplyr package
+df.p <- df.trial %>%
+  filter(game > 1 & pred.EV != pred.RSF) %>%
+  group_by(id, variance.condition, goal.condition) %>%
+  summarise(
+    pred.EV.acc.rate = mean(pred.EV.acc, na.rm = TRUE),
+    pred.RSF.acc.rate = mean(pred.RSF.acc, na.rm = TRUE)
+  )
+
+# aggregate using the dplyr package
+df.p.s <- df.trial.s %>%
+  filter(game > 1 & pred.EV != pred.RSF) %>%
+  group_by(id, variance.condition, goal.condition) %>%
+  summarise(
+    pred.EV.acc.rate = mean(pred.EV.acc, na.rm = TRUE),
+    pred.RSF.acc.rate = mean(pred.RSF.acc, na.rm = TRUE)
+  )
+
+par(mfrow = c(2,1), mar=c(5,6.7,3,1.5))
+yarrr::pirateplot(pred.RSF.acc.rate ~ goal.condition + variance.condition, data = df.p,
+           ylab = "RSF corr pred rate", xlab = "Condition", main = "Only Trials where RSF and EV differ - Study")
+yarrr::pirateplot(pred.RSF.acc.rate ~ goal.condition + variance.condition, data = df.p.s,
+           ylab = "RSF corr pred rate", xlab = "Condition", main = "Only Trials where RSF and EV differ - Simulation")
+
+```
+
+### Proportion of high variance chosen goal vs. no goal
+
+Contrary to our prediction from the simulation (see Figure 5), a Wilcoxon-Mann-Whitney test showed no significant difference of the proportion of high variance options chosen for the goal vs. no goal condition ($Z = -.23$, $p = .82$).
+
+```{r}
+w.hvo <- coin::wilcox_test(high.var.chosen.rate ~ as.factor(goal.condition),
+                           data = df.participant)
+w.hvo
+
+# effect size r
+eff.r.hvo <- as.numeric(w.hvo@statistic@teststatistic / sqrt(nrow(df.participant)))
+eff.r.hvo
+
+```
+
+
+```{r, fig.height=10, fig.cap="Figure 5: Proportion of high variance chosen separated for goal and no goal condition. Top: Study data. Bottom: Simulation Data."}
+par(mfrow = c(2,1), mar=c(5,6.7,3,1.5))
+yarrr::pirateplot(high.var.chosen.rate ~ goal.condition, data = df.participant,
+           ylab = "prop high var chosen", xlab = "Conditions", main = "Risky Rate Overall - Study")
+yarrr::pirateplot(high.var.chosen.rate ~ goal.condition, data = df.participant.s,
+           ylab = "prop high var chosen", xlab = "Conditions", main = "Risky Rate Overall - Simulation")
+```
+
+### Probability of reaching 100 points in the goal and no goal condition
+
+We assumed that in the goal condition the probability of reaching 100 points would be larger than in the no goal condition, because participants strategies should focus on reaching 100 points.
+
+
+```{r}
+## Check the probability of reaching 100 points.
+# PREDICTION: The probability of reaching 100 points is higher in the goal vs. the no goal condition.
+w.rg <- coin::wilcox_test(goalReachedRate ~ as.factor(goal.condition),
+                          data = df.participant)
+w.rg
+
+# effect size r
+eff.r.rg <- as.numeric(w.rg@statistic@teststatistic / sqrt(nrow(df.participant)))
+eff.r.rg
+```
+
+Contrary to our prediction, a Wilcoxon-Mann-Whitney test showed no significant effect of the goal condition on the probability of reaching 100 points ($Z=1.81$, $p = .07$), $r = .09$. Figure 6 illustrates this with a comparison to our simulation data.
+
+```{r, fig.height=10, fig.cap="Figure 6: Probability of reaching 100 points, separated for goal and no goal condition. Top: Study Data. Bottom: Simulation Data."}
+par(mfrow = c(2,1), mar=c(5,6.7,3,1.5))
+yarrr::pirateplot(goalReachedRate ~ goal.condition + variance.condition, data = df.participant,
+           ylab = "Reach goal", xlab = "Conditions", main = "Goal Reached Rate - Study")
+yarrr::pirateplot(goalReachedRate ~ goal.condition + variance.condition, data = df.participant.s,
+           ylab = "Reach goal", xlab = "Conditions", main = "Goal Reached Rate - Simulation")
+
+```
+
+### Number of points earned over variance conditions
+
+We predicted tha tthe number of points earned was, on average, highest in the Equal environment. This is more a sort of sanity check, since in this environment both options have the same, high, EV. We tested the hypothesis with an ANOVA to also check if there were effects of the goal condition or an interaction.
+
+```{r}
+df.participant$goal.condition <- as.factor(df.participant$goal.condition)
+df.participant$variance.condition <- as.factor(df.participant$variance.condition)
+
+TAB <- afex::aov_ez(id = "id", dv = "points.cum", data = df.participant,
+                    between = c("goal.condition", "variance.condition"), factorize = FALSE, return = "Anova")
+
+# Partial eta squared and power
+eff <- length(TAB[, 1]) - 2
+Power <- vector(length = eff)
+eta.sq <- vector(length = eff)
+df2 <- TAB["Residuals", 2]
+
+for (i in 1:eff){
+  df1 <- TAB[i + 1, 2]
+  eta.sq[i] <- TAB[i + 1, 1] / (TAB[i + 1, 1] + TAB["Residuals", 1])
+  ncp <- TAB[i + 1, 3] * df1
+  Fk <- qf(1-0.05, df1, df2)
+  Power[i] <- 1 - pf(Fk, df1 = df1, df2 = df2, ncp = ncp)
+}
+
+# Table with eta squared and power
+eta.sq.Power <- data.frame(eta.sq, Power)
+rownames(eta.sq.Power) <- rownames(TAB)[-c(1, nrow(TAB))]
+
+# Compute Least–Square-Means / Rand-Means
+TAB2 <- lm(points.cum ~ variance.condition * goal.condition, data = df.participant)
+ls.means <- lsmeans(TAB2, ~ variance.condition * goal.condition)
+
+# print outputs
+list(ANOVA=TAB, eta.sq.Power=eta.sq.Power, "Estimated Means"=ls.means)
+
+# check hypothesized contrast that Equal has the highest value
+C <- list(c(2, -1, -1))
+M <- lsmeans(TAB2, ~variance.condition)
+contrast(M, C)
+```
+
+The ANOVA revealed a significant main effect of variance condition on the total number of points earned ($F(2, 404) = 96.45$, $p < .001$). A contrast analysis showed that, as predicted, in the Equal environment, total points were, on average, higher in the Equal than in the other environments ($t(404) = 12.63$, $p < .001$). Figure 7 shows this pattern for the study and simulation data. Note that the data didn't match the predicted pattern in the high EV is high variance (High) condition.
+
+
+```{r, fig.height=10, fig.cap="Figure 7: Total Points Reached, separated for goal and variance condition. Top: Study Data. Bottom: Simulation Data."}
+par(mfrow = c(2,1), mar=c(5,6.7,3,1.5))
+yarrr::pirateplot(points.cum ~ goal.condition + variance.condition, data = df.participant,
+           ylab = "Total Number of Points", xlab = "Conditions", main = "Total Points Reached - Study")
+yarrr::pirateplot(points.cum ~ goal.condition + variance.condition, data = df.participant.s,
+           ylab = "Total Number of Points", xlab = "Conditions", main = "Total Points Reached - Simulation")
+
+
+```
+
+## Survey Data
+
+Now let's also look at the survey data. The mean age of participants was `r round(mean(df.participant$age))` years (range `r range(df.participant$age)`). Of the `r nrow(df.participant)`included participants, 49% were female, 50% male and 1% didn't specify their sex.
+
+In the survey, participants were asked which strategy best described their behavior in the task: Either "I always tried to select the box that gives the most points on average." (EV) or "I first looked at how many clicks I had left and how many points I had. Then, I selected one box or the other." (RSF). Overall 63% chose the first strategy. Table 2 shows the proportion of strategy chosen separated for the goal and the variance condition. Note that we predicted there would be no difference in strategy reported for the goal condition. This prediction was erroneously made from the simulation data.
+
+||       |    1|    2|
+|:----|:------|----:|----:|
+|Variance Condition | Equal | 0.61 | 0.39 |
+||High | 0.62 | 0.38 |
+||Low | 0.67 | 0.33 |
+|Goal Condition| Goal | 0.55| 0.45|
+||NoGoal | 0.70| 0.30|
+Table: Proportion of participants in the variance and conditions choosing strategy 1 or 2.
+
+After having completed the bandit task, participants were asked which option they thought had, on average, the higher point value:
+
+* High: "I think the option with the higher point variability also had higher values on average."
+* Low: "I think the option with the lower point variability had higher values on average."
+* Equal: "I think both options gave the same number of points on average."
+
+Table 3 shows participants answers to the question which option they thought to have the higher point value.
+
+||      |    High|   Low|    Equal|
+|:----|:-----|----:|----:|----:|
+|variance condition|Equal | 0.55| 0.13| 0.31|
+||High  | 0.55| 0.12| 0.33|
+||Low   | 0.49| 0.23| 0.28|
+|goal condition|Goal | 0.53| 0.14| 0.33|
+||NoGoal | 0.53 | 0.18 | 0.29|
+Table: Percent of participants indicating, that a certain option had the higher EV, separated for variance and goal condition.
+
+Finally we predicted, that participants in the goal condition found it harder to earn points than those in the no goal condition.
+
+```{r}
+w.test <- coin::wilcox_test(game.difficulty ~ as.factor(goal.condition),
+                            data = df.participant)
+w.test
+eff.r <- as.numeric(w.test@statistic@teststatistic / sqrt(nrow(df.participant)))
+eff.r
+```
+
+A Wilcoxon-Mann-Whitney test, confirmed this hypothesis ($Z = 7.91$, $p < .001$, $r = .39$).
+
+# Unregistered Analyses
+
+## Evidence Strength
+
+Let's see if there's a relationship between how much the two strategies favor an option (evidence strength), and how likely it was to be chosen by participants. For this we first define a function to get the plots.
+
+
+```{r}
+### function definition ---------------
+evidence_strength2 <- function(df, strategy, nround, nbatches, ...){
+  if (strategy == "RSF") {
+    fav.opt <- round(df$p.getthere.1.subj - df$p.getthere.2.subj, nround)
+  } else if (strategy == "EV") {
+    fav.opt <- round((df$subj.mean.1 / df$sd.sub1) - (df$subj.mean.2 / df$sd.sub2), nround)
+  } else {
+    stop("No valid strategy. Strategy must be either EV or RSF")
+  }
+  fav.opt[fav.opt == Inf | fav.opt == -Inf] <- NA
+  
+  # create batches
+  batch.size <- (max(fav.opt, na.rm = TRUE) - min(fav.opt, na.rm = TRUE)) / nbatches
+  
+  batch.int <- cumsum(c(min(fav.opt, na.rm = TRUE), rep(batch.size, nbatches)))
+  
+  # compute the probability of choosing option 1, given a certain RSF.diff value
+  p.choose.1 <- unlist(lapply(seq_len(nbatches),
+                              function(x, df, fav.opt, batch.int){
+                                mean(df$selection[fav.opt >= batch.int[x] &
+                                                    fav.opt < batch.int[x+1]] == 1,
+                                     na.rm = TRUE)
+                              },
+                              df = df, fav.opt = fav.opt, batch.int = batch.int))
+  
+  numobs <- unlist(lapply(seq_len(nbatches),
+                          function(x, df, fav.opt, batch.int){
+                            vec <- df$selection[fav.opt >= batch.int[x] &
+                                                  fav.opt < batch.int[x+1]]
+                            vec <- vec[!is.na(vec)]
+                            
+                            lvec <- length(vec)
+                            
+                            lvec
+                            
+                          },
+                          df = df, fav.opt = fav.opt, batch.int = batch.int))
+  
+  # scale the size ob points
+  total.l <- length(df$selection[!is.na(df$selection)])
+  
+  numobs.s <- round(numobs / total.l, 2)
+  
+
+  # plot the results
+  plot(batch.int[1:(length(batch.int)-1)] + (batch.size / 2), p.choose.1, type = "b",
+       ylab = "p of Choosing Option 1", col = gray(0.3, .7), lwd = 2, cex = exp(numobs.s),
+       cex.lab = 1.5, cex.axis = 1.5, ylim = c(0, 1), pch = 16, ...)
+  
+  text(x = batch.int[1:(length(batch.int)-1)] + (batch.size / 2), 
+       y = p.choose.1, 
+       labels = numobs.s, pos = 3)
+  
+  df.evidence <- data.frame("p.choose.1" = p.choose.1,
+                            "batch.int" = batch.int[1:(length(batch.int)-1)] + (batch.size / 2),
+                            "n.obs" = numobs,
+                            "n.obs.s" = numobs.s)
+  
+  df.evidence
+}
+```
+
+Figure 8 shows (only for the goal condition) the relation between RSF evidence strength for option A (i.e. the probability of option A getting you to the goal minus the probability of option B getting you to the goal) and the probability of choosing option A. We can see a (slight) positive relation between RSF evidence strength and the probability of choosing option A. One concern here is, that the evidence strenght is mostly relatively small, i.e. close to 0, therefore most of the data is pooled around 0.
+
+```{r, fig.height=20, fig.cap="Figure 8: Probability of choosing option A as a function of RSF evidence strength for option A. Goal condition. Top to bottom: All trials, Equal, Low and High variance condition."}
+
+par(mfrow = c(4,1))
+### Evidence in RSF strategy --------------
+RSF.all2 <- evidence_strength2(subset(df.trial, goal.condition == "Goal"), "RSF", 2, 10,
+                             xlab = "p getthere 1 - p getthere 2",
+                             main = "Evidence Strength RSF, All Trials, Goal Condition")
+
+# separated for variance conditions
+RSF.equal2 <- evidence_strength2(subset(df.trial, goal.condition == "Goal" &
+                                          variance.condition == "Equal"), "RSF", 2,
+                              10, xlab = "p getthere 1 - p getthere 2",
+                              main = "Evidence Strength RSF, Equal EVs, Goal Condition")
+
+RSF.low2 <- evidence_strength2(subset(df.trial, goal.condition == "Goal" &
+                                          variance.condition == "Low"), "RSF", 2,
+                                 10, xlab = "p getthere 1 - p getthere 2",
+                                 main = "Evidence Strength RSF, Low Variance, Goal Condition")
+
+RSF.high2 <- evidence_strength2(subset(df.trial, goal.condition == "Goal" &
+                                        variance.condition == "High"), "RSF", 2,
+                               10, xlab = "p getthere 1 - p getthere 2",
+                               main = "Evidence Strength RSF, High Variance, Goal Condition")
+```
+
+Figure 9 shows the relation between EV evidence strength (i.e. $\frac{\overline{A}}{s_{A}} - \frac{\overline{B}}{s_{B}}$) and the probability of choosing A for the goal condition. There is no clear positive relationship between the EV evidence strength and the probability of choosing A in the goal condition.
+
+```{r, fig.height=20, fig.cap="Figure 9: Probability of choosing option A as a function of EV evidence strength for option A. Goal condition. Top to bottom: All trials, Equal, Low and High variance condition."}
+
+par(mfrow = c(4,1))
+### Evidence in EV strategy ---------------
+
+# with the evidence2 function
+EV.goal2 <- evidence_strength2(subset(df.trial, goal.condition == "Goal"), "EV", 0, 10,
+                             xlab = "d prime 1 - d prime 2",
+                             main = "Evidence Strength EV, All Trials, Goal Condition")
+
+
+# let's check the different variance conditions separately
+
+EV.goal.equal2 <- evidence_strength2(subset(df.trial, goal.condition == "Goal" &
+                                              variance.condition == "Equal"), "EV", 0, 10,
+                               xlab = "d prime 1 - d prime 2",
+                               main = "Evidence Strength EV, Equal EVs, Goal Condition")
+
+EV.goal.low2 <- evidence_strength2(subset(df.trial, goal.condition == "Goal" &
+                                            variance.condition == "Low"), "EV", 0, 10,
+                                     xlab = "d prime 1 - d prime 2",
+                                     main = "Evidence Strength EV, Low variance, Goal Condition")
+
+EV.goal.high2 <- evidence_strength2(subset(df.trial, goal.condition == "Goal" &
+                                             variance.condition == "High"), "EV", 0, 10,
+                                     xlab = "d prime 1 - d prime 2",
+                                     main = "Evidence Strength EV, High Variance, Goal Condition")
+```
+
+Figure 10 shows the relationship between EV evidence strength and the probability of choosing option A for the no goal condition. There seems to be no clear relationship.
+
+```{r, fig.height=20, fig.cap="Figure 10: Probability of choosing option A as a function of EV evidence strength for option A. No Goal condition. Top to bottom: All trials, Equal, Low and High variance condition."}
+
+par(mfrow = c(4,1))
+EV.no.goal2 <- evidence_strength2(subset(df.trial, goal.condition == "NoGoal"), "EV", 0, 10,
+                                xlab = "d prime 1 - d prime 2",
+                                main = "Evidence Strength EV, All Trials, No Goal Condition")
+
+EV.no.goal.equal.2 <- evidence_strength2(subset(df.trial, goal.condition == "NoGoal" &
+                                                  variance.condition == "Equal"), "EV", 0, 10,
+                                  xlab = "d prime 1 - d prime 2",
+                                  main = "Evidence Strength EV, Equal EVs, No Goal Condition")
+
+EV.no.goal.low.2 <- evidence_strength2(subset(df.trial, goal.condition == "NoGoal" &
+                                                  variance.condition == "Low"), "EV", 0, 10,
+                                         xlab = "d prime 1 - d prime 2",
+                                         main = "Evidence Strength EV, Low Variance, No Goal Condition")
+
+EV.no.goal.high.2 <- evidence_strength2(subset(df.trial, goal.condition == "NoGoal" &
+                                                  variance.condition == "High"), "EV", 0, 10,
+                                         xlab = "d prime 1 - d prime 2",
+                                         main = "Evidence Strength EV, Equal EVs, No Goal Condition")
+
+
+```
+
+## Learning over games
+
+To see whether participants learned over games, figure 11 shows the proportion of participants who reached the goal from game 1 to 10. It can be seen, that the curve is slighly increasing (from $p_{GoalReached} = .39$ to $p_{GoalReached} = .47$). The difference between the proportion of participants who reached the goal in game 1 and game 10 is not significant ($V = 1140$, $p = .08$).
+
+
+```{r, fig.height=5, fig.cap="Figure 11: Proportion of participants reaching the goal over games."}
+props <- unlist(lapply(2:11,
+                       function(x, df){
+                         mean(df$goalReachedRate[df$goal.condition == "Goal" & df$game == x])
+                         },
+                       df = df.game))
+
+n.games <- 10
+
+plot(1:n.games, props, xlab = "Game Nr", ylab = "Prop Goals Reached",
+     main = "Prop Goals Reached Over All Games", type = "b", ylim = c(0, 1),
+     pch = 16, col = gray(0.3, .7), lwd = 2, cex = 1.5, cex.lab = 1.5, cex.axis = 1.5)
+
+text(1:n.games, 
+     y = props, 
+     labels = round(props, 3), pos = 3)
+
+wilcox.test(df.game$goalReachedRate[df.game$goal.condition == "Goal" & df.game$game == 2],
+            df.game$goalReachedRate[df.game$goal.condition == "Goal" & df.game$game == 11],
+            paired = TRUE)
+```
+
+To see whether participants in the no goal condition learned over games, Figure 12 shows the mean number of points earned from game 1 to 10. It can be seen, that the curve is slighly increasing (from $\overline{Points} = 89.45$ to $\overline{Points} = 94.69$). The difference between the number of points earned in the no goal condition in game 1 and game 10 is not significant ($V = 10335$, $p = .11$).
+
+```{r, fig.height=5, fig.cap="Figure 12: Average Number of points earned over games in the no goal condition."}
+mean.points <- unlist(lapply(2:11,
+                        function(x, df){
+                          mean(df$points.cum[df$goal.condition == "NoGoal" & df$game == x])
+                        },
+                        df = df.game))
+
+n.games <- 10
+
+plot(1:n.games, mean.points, xlab = "Game Nr", ylab = "Mean Points earned",
+     main = "Mean Points Earned Over All Games, No Goal Condition", type = "b", ylim = c(0, 120),
+     pch = 16, col = gray(0.3, .7), lwd = 2, cex = 1.5, cex.lab = 1.5, cex.axis = 1.5)
+
+text(1:n.games, 
+     y = mean.points, 
+     labels = round(mean.points, 1), pos = 3)
+
+wilcox.test(df.game$points.cum[df.game$goal.condition == "NoGoal" & df.game$game == 2],
+            df.game$points.cum[df.game$goal.condition == "NoGoal" & df.game$game == 11],
+            paired = TRUE)
+```
+
+Finally, Figure 13 shows, that participants in the goal condition do not act more in an RSF way in later than in early games.
+
+
+```{r, fig.height=5, fig.cap="Figure 13: Proportion of RSF Accuracy over games in the goal condition."}
+props.RSF.acc <- unlist(lapply(2:11,
+                        function(x, df){
+                          mean(df$pred.RSF.acc.rate[df$goal.condition == "Goal" & df$game == x])
+                        },
+                        df = df.game))
+
+n.games <- 10
+
+plot(1:n.games, props.RSF.acc, xlab = "Game Nr", ylab = "Prop RSF Accuracy",
+     main = "Prop RSF Accuracy Over All Games, Goal Condition", type = "b", ylim = c(0, 1),
+     pch = 16, col = gray(0.3, .7), lwd = 2, cex = 1.5, cex.lab = 1.5, cex.axis = 1.5)
+
+text(1:n.games, 
+     y = props.RSF.acc, 
+     labels = round(props.RSF.acc, 3), pos = 3)
+
+```
+
+## Prediction accuracies for people who indicated that they followed RSF or EV.
+
+
+```{r}
+# get list of people in the goal condition who either selected the EV or RSF strategy
+EV.ids.goal <- df.participant$id[df.participant$which.strategy == 1 &
+                                   df.participant$goal.condition == "Goal"]
+RSF.ids.goal <- df.participant$id[df.participant$which.strategy == 2 &
+                                    df.participant$goal.condition == "Goal"]
+
+# what are the mean accuracy rates for RSF and EV in the Goal condition
+mean(df.participant$pred.RSF.acc.rate[df.participant$goal.condition == "Goal"])
+mean(df.participant$pred.EV.acc.rate[df.participant$goal.condition == "Goal"])
+
+# what are the mean accuracy rates for RSF and EV for the people that indicated
+# that they would follow the respective strategy
+mean(df.participant$pred.RSF.acc.rate[df.participant$which.strategy == 2 &
+                                        df.participant$goal.condition == "Goal"])
+mean(df.participant$pred.EV.acc.rate[df.participant$which.strategy == 1 &
+                                       df.participant$goal.condition == "Goal"])
+```
+
+We can see that the mean accuracies of the two models are only slightly higher when only participants are condsidered who indicated that they had followed the respective strategy. But when we look at the model predictions separated by whether participants had indicated that they had followed this respective model, we can see a difference.
+
+```{r, fig.height=10, fig.cap="Figure 1: Model Accuracy separated for whether this model was supposedly followed and goal condition. Top: RSF Model. Bottom: EV Model."}
+#plot the differences for the 
+pirateplot(pred.RSF.acc.rate ~ which.strategy + goal.condition, data = df.participant,
+           main = "RSF Model", ylab = "RSF Prediction Accuray")
+pirateplot(pred.EV.acc.rate ~ which.strategy + goal.condition, data = df.participant,
+           main = "EV Model", ylab = "EV Prediction Accuracy")
+```
+
+Let's test with a chi squared test if these differences are significant.
+
+```{r}
+m.RSF.1 <- with(subset(df.trial, game > 1 & goal.condition == "Goal" & id %in% RSF.ids.goal),
+     mean(pred.RSF.acc[pred.EV != pred.RSF], na.rm = TRUE))
+m.RSF.2 <- with(subset(df.trial, game > 1 & goal.condition == "Goal" & id %in% EV.ids.goal),
+     mean(pred.RSF.acc[pred.EV != pred.RSF], na.rm = TRUE))
+
+chisq.test(c(m.RSF.1, m.RSF.2))
+
+m.EV.1 <- with(subset(df.trial, game > 1 & goal.condition == "Goal" & id %in% RSF.ids.goal),
+     mean(pred.EV.acc[pred.EV != pred.RSF], na.rm = TRUE))
+m.EV.2 <- with(subset(df.trial, game > 1 & goal.condition == "Goal" & id %in% EV.ids.goal),
+     mean(pred.EV.acc[pred.EV != pred.RSF], na.rm = TRUE))
+
+chisq.test(c(m.EV.1, m.EV.2))
+
+```
+

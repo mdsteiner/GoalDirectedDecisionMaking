@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_027"	35	1	2	"random clicking"	"no"	1	1	"it was fine i enjoyed the game"	1	"none"	2	2	2	2	10	2	5	3	1	1	NA	2	NA

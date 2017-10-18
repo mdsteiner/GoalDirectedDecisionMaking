@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"similar.task"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"foundHIT"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_223"	62	2	3	"58C 0C.6ssgMxsT"	"z7"	2	1	2	"q7uvKv0qDRft6L23Yd93"	2	"RBOfBQRSAi674Z6cOAtMjPFLbf"	1	2	2	2	25	1	2	3	3	1	1	"I read the instructions"	2	NA

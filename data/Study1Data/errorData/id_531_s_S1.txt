@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"attention.clicks"	"instructions.clear"	"similar.task"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"foundHIT"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_531"	25	2	4	"i tried to notice the trend of the box. one box had a greater variance between numbers, enabling you to either gain/lose more points."	"no"	2	2	1	2	NA	1	NA	1	2	2	2	10	2	5	4	1	1	1	NA	6	1

@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_063"	20	1	2	"Find out which box gave the best return and keep clicking on it."	"I tried to see which box gave the largest return and stuck to that one."	2	1	NA	1	NA	2	2	2	2	25	2	4	2	3	1	"I read the instructions"	4	4

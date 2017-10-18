@@ -1,0 +1,47 @@
+body {
+	font-size: 160%;
+	margin: auto;
+}
+
+.recalculating {
+	opacity: 1.0;
+}
+
+.firstRow, #GameDisplay, #instructionsClear, #knewBNT, #sex {
+	margin-top: 3em;
+}
+
+.continueButtons {
+	margin-top: 1em;
+	margin-bottom: 2em;
+}
+
+#end {
+	margin-top: 2em;
+	margin-left: 3.2em;
+	margin-bottom: 3em;
+}
+
+#affectReward {
+	font-size: 20px;
+	color: blue;
+}
+
+.inputTitle {
+	padding-top: 1em;
+	padding-bottom: 0;
+	margin-bottom: 0em;
+}
+
+#notUnderstood, #describeError {
+	padding-top: 0.1em;
+	margin-top: 0.1em;
+}
+
+.page4, .page16, .page17, .page18, .page19, .page21, .page22, .page23 {
+	margin-left: 15em;
+}
+
+.page1, .page2, .page3, .page3.5, .page6, .pageEndGame, .page20 {
+	margin-left: 10em;
+}

@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"attention.clicks"	"instructions.clear"	"similar.task"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"foundHIT"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_292"	26	1	1	"Just clicked until a negative outcome appeared, then switch boxes"	"I did not"	1	NA	1	2	NA	1	NA	1	2	2	2	25	1	3	4	3	1	NA	"I read the instructions"	1	NA

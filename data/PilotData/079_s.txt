@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_079"	45	1	1	"I chose the box that had the most consistent high points more then the other two"	"I did not change strategy"	2	1	"Nothing in particular."	1	NA	2	2	2	2	15	2	4	3	3	1	"I read the instructions"	1	NA

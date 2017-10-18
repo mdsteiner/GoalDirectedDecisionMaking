@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"similar.task"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"foundHIT"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_301"	36	1	4	"7NP"	"Y3EFkDLF7Q79zFOaT9XVNvAEh2xctc"	2	1	2	" LDwJa9N3"	1	"pL"	2	2	1	2	25	2	4	3	3	1	1	"I read the instructions"	5	4

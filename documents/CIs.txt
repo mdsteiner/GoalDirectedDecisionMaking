@@ -1,0 +1,32 @@
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: high.var.chosen ~ variance.condition.f + goal.condition.f + (1 |      game.f) + (1 | id.f)
+   Data: subset(df.trial, overGoal == 0 & game > 1)
+
+     AIC      BIC   logLik deviance df.resid 
+117377.5 117434.2 -58682.8 117365.5    92765 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.6887 -0.7986 -0.5383  1.0473  4.1630 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ id.f   (Intercept) 0.391590 0.6258  
+ game.f (Intercept) 0.008281 0.0910  
+Number of obs: 92771, groups:  id.f, 410; game.f, 10
+
+Fixed effects:
+                         Estimate Std. Error z value Pr(>|z|)    
+(Intercept)              -0.43556    0.07111  -6.125 9.07e-10 ***
+variance.condition.fHigh  0.40020    0.07743   5.169 2.36e-07 ***
+variance.condition.fLow  -0.23663    0.07792  -3.037  0.00239 ** 
+goal.condition.fNoGoal   -0.12519    0.06371  -1.965  0.04940 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) vrn..H vrn..L
+vrnc.cndt.H -0.543              
+vrnc.cndt.L -0.558  0.499       
+gl.cndtn.NG -0.490 -0.009  0.030

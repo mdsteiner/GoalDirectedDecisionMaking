@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"similar.task"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"foundHIT"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_449"	46	1	4	"LIpCM4r"	"amiLIcIYn263mq7a"	2	1	1	"JZiR1"	2	"cA1uHIUvFfN2YMrc492bTZLx7wzrLB.O8Mxh,Y"	2	2	2	2	25	2	5	3	2	1	2	NA	4	4

@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_040"	29	2	2	"I tried to pick boxes that had more consistent points."	"I had trouble figuring out what box would be best, so I just choose equally from all the boxes at first."	1	1	NA	1	NA	2	2	2	2	25	2	4	3	3	1	"I read the instructions"	1	NA

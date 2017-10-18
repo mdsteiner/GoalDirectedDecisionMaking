@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"similar.task"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"foundHIT"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_046"	60	2	3	"v8NcZz40"	"2qnE41bryES8favU8tnldHd2xP2WF"	1	1	2	"Q8NcyTThhOdnYMKGfX9.1uhq.d1C0617HZbp"	1	"96.AOQg7TgZdD3n9qWhe"	1	2	2	2	25	2	4	4	3	1	1	NA	3	NA

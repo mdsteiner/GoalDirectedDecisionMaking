@@ -1,0 +1,2 @@
+"workerid"	"age"	"sex"	"game.difficulty"	"strategy"	"strategy.change"	"which.strategy"	"instructions.clear"	"not.understood"	"error.or.bugs"	"describeError"	"gave.up"	"tookNotes"	"usedCalculator"	"got.help"	"BNT"	"knewBNT"	"interesting"	"education"	"attention.check"	"trust.data"	"text.attention.check"	"condition"	"caredReachGoal"
+"id_001"	26	1	3	"Try to just stay positive and hope for 150+ points. "	"I thought certain boxes gave you more points. I think it was mostly random. "	1	1	NA	1	NA	2	2	2	2	15	2	4	2	3	1	"I read the instructions "	4	5

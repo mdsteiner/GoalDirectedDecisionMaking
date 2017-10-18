@@ -1,0 +1,23 @@
+This file contains a log of when and why, which participant was excluded.
+
+
+
+Number of participants excluded because they were not allowed to participate: 30
+Their Ids are:
+id_047; id_055; id_059; id_064; id_069; id_081; id_084; id_109; id_125; id_171; id_184; id_198; id_210; id_254; id_255; id_261; id_275; id_281; id_302; id_315; id_352; id_409; id_427; id_434; id_483; id_501; id_527; id_540
+
+
+
+Number of participant excluded due to too many or too few files are: 58
+Their Ids are:
+id_002; id_004; id_017; id_041; id_042; id_097; id_118; id_124; id_155; id_170; id_179; id_185; id_187; id_208; id_223; id_229; id_236; id_237; id_247; id_259; id_274; id_277; id_282; id_284; id_286; id_300; id_310; id_314; id_319; id_329; id_344; id_346; id_348; id_359; id_365; id_368; id_373; id_375; id_379; id_385; id_398; id_404; id_415; id_417; id_424; id_440; id_454; id_458; id_463; id_472; id_484; id_488; id_509; id_513; id_518; id_542; id_543; id_544
+
+
+Number of participant excluded due to behavioral patterns in switch rates and response times are: 50
+Their Ids are:
+id_002; id_026; id_047; id_053; id_056; id_065; id_069; id_088; id_095; id_110; id_127; id_130; id_158; id_173; id_181; id_185; id_193; id_196; id_200; id_209; id_229; id_243; id_252; id_259; id_262; id_302; id_309; id_326; id_330; id_340; id_343; id_351; id_365; id_405; id_407; id_422; id_438; id_442; id_446; id_457; id_465; id_474; id_477; id_484; id_510; id_516; id_527; id_528; id_531; id_534
+
+
+Number of participant excluded due to their answer in the survey, that we cannot trust their data is: 8
+Their Ids are:
+id_198; id_220; id_229; id_250; id_277; id_394; id_514; id_525
