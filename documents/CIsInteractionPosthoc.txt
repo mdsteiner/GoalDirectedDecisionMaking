@@ -1,0 +1,60 @@
+[1] "normal EV model"
+[1] ""
+[1] "Interaction environment goal"
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: 
+high.var.chosen ~ variance.condition.f + goal.condition.f + variance.condition.f:goal.condition.f +  
+    (1 | game) + (1 | id.f)
+   Data: subset(df.trial, overGoal == 1 & game > 1)
+
+     AIC      BIC   logLik deviance df.resid 
+ 10560.2  10617.6  -5272.1  10544.2     9721 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.5413 -0.6496 -0.2521  0.7427  4.5684 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ id.f   (Intercept) 2.26199  1.5040  
+ game   (Intercept) 0.02576  0.1605  
+Number of obs: 9729, groups:  id.f, 400; game, 10
+
+Fixed effects:
+                                                Estimate Std. Error z value
+(Intercept)                                      -1.5741     0.2150  -7.321
+variance.condition.fHigh                          1.2277     0.3006   4.084
+variance.condition.fLow                           0.2097     0.2924   0.717
+goal.condition.fNoGoal                            1.2583     0.2784   4.520
+variance.condition.fHigh:goal.condition.fNoGoal   0.1476     0.4039   0.365
+variance.condition.fLow:goal.condition.fNoGoal   -0.9950     0.4014  -2.479
+                                                Pr(>|z|)    
+(Intercept)                                     2.47e-13 ***
+variance.condition.fHigh                        4.42e-05 ***
+variance.condition.fLow                           0.4733    
+goal.condition.fNoGoal                          6.18e-06 ***
+variance.condition.fHigh:goal.condition.fNoGoal   0.7147    
+variance.condition.fLow:goal.condition.fNoGoal    0.0132 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) vrn..H vrn..L gl..NG v..H:.
+vrnc.cndt.H -0.675                            
+vrnc.cndt.L -0.690  0.493                     
+gl.cndtn.NG -0.726  0.518  0.531              
+vrn..H:..NG  0.496 -0.740 -0.365 -0.687       
+vrn..L:..NG  0.503 -0.359 -0.728 -0.693  0.476
+[1] "Tjurs D:"
+Tjur's D: 0.3142
+                                                      2.5 %     97.5 %
+.sig01                                           1.33787493  1.6199780
+.sig02                                           0.02382316  0.2451916
+(Intercept)                                     -2.02481078 -1.1588412
+variance.condition.fHigh                         0.64202815  1.8230776
+variance.condition.fLow                         -0.33461432  0.8200637
+goal.condition.fNoGoal                           0.71063951  1.8147778
+variance.condition.fHigh:goal.condition.fNoGoal -0.73980501  0.9328920
+variance.condition.fLow:goal.condition.fNoGoal  -1.79898026 -0.2966588

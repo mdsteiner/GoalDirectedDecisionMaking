@@ -87,9 +87,9 @@ dev.off()
 evidence_strength2 <- function(df, strategy, nround, nbatches, withText,
                                returnDf, cex.m, useLines, cex.text, whichType, ...){
   if (strategy == "RST") {
-    fav.opt <- round(df$p.getthere.1.subj - df$p.getthere.2.subj, nround)
+    fav.opt <- round(df$p.getthere.2.subj - df$p.getthere.1.subj, nround)
   } else if (strategy == "EV") {
-    fav.opt <- round((df$subj.mean.1 / df$sd.sub1) - (df$subj.mean.2 / df$sd.sub2), nround)
+    fav.opt <- round((df$subj.mean.2 / df$sd.sub2) - (df$subj.mean.1 / df$sd.sub1), nround)
   } else {
     stop("No valid strategy. Strategy must be either EV or RST")
   }
@@ -100,11 +100,11 @@ evidence_strength2 <- function(df, strategy, nround, nbatches, withText,
   
   batch.int <- cumsum(c(min(fav.opt, na.rm = TRUE), rep(batch.size, nbatches)))
   
-  # compute the probability of choosing option 1, given a certain RSF.diff value
-  p.choose.1 <- unlist(lapply(seq_len(nbatches),
+  # compute the probability of choosing the risky option (2), given a certain RSF.diff value
+  p.choose.risky <- unlist(lapply(seq_len(nbatches),
                               function(x, df, fav.opt, batch.int){
                                 mean(df$selection[fav.opt >= batch.int[x] &
-                                                    fav.opt < batch.int[x+1]] == 1,
+                                                    fav.opt < batch.int[x+1]] == 2,
                                      na.rm = TRUE)
                               },
                               df = df, fav.opt = fav.opt, batch.int = batch.int))
@@ -130,22 +130,22 @@ evidence_strength2 <- function(df, strategy, nround, nbatches, withText,
   
   # plot the results
   if (isTRUE(useLines)){
-    lines(batch.int[1:(length(batch.int)-1)] + (batch.size / 2), p.choose.1, type = whichType,
-          ylab = "p of Choosing Option A\n", cex = cex.m * exp(numobs.s), ...)
+    lines(batch.int[1:(length(batch.int)-1)] + (batch.size / 2), p.choose.risky, type = whichType,
+          ylab = "p Risky Choice\n", cex = cex.m * exp(numobs.s), ...)
   } else {
-    plot(batch.int[1:(length(batch.int)-1)] + (batch.size / 2), p.choose.1, type = whichType,
-         ylab = "p of Choosing Option A\n", cex = cex.m * exp(numobs.s), ...)
+    plot(batch.int[1:(length(batch.int)-1)] + (batch.size / 2), p.choose.risky, type = whichType,
+         ylab = "p Risky Choice\n", cex = cex.m * exp(numobs.s), ...)
   }
   
   if (isTRUE(withText)){
     text(x = batch.int[1:(length(batch.int)-1)] + (batch.size / 2), 
-         y = p.choose.1, 
+         y = p.choose.risky, 
          labels = numobs.s, pos = 3,
          cex = cex.text)
   }
   
   if (isTRUE(returnDf)){
-    df.evidence <- data.frame("p.choose.1" = p.choose.1,
+    df.evidence <- data.frame("p.choose.risky" = p.choose.risky,
                               "batch.int" = batch.int[1:(length(batch.int)-1)] + (batch.size / 2),
                               "n.obs" = numobs,
                               "n.obs.s" = numobs.s)
@@ -153,6 +153,47 @@ evidence_strength2 <- function(df, strategy, nround, nbatches, withText,
     df.evidence
   }
 }
+
+
+# only goal RST
+pdf("plot/EvidenceStrengthsRisky.pdf", width = 10, 5.5)#height = 13.125)
+# All conditions
+par(mfrow = c(1,1), mar =c(5.1, 7.5, 4.1, 2.1))
+# Equal 
+evidence_strength2(subset(df.trial, `Goal Condition` == "Goal" & 
+                            `Variance Condition` == "Equal" & game > 1), "RST", 2, 10, 
+                   FALSE, FALSE, 1.5, FALSE, 1.5, "l", col= gray(0.65, .7), lwd = 2.25,
+                   ylim = c(0, 1), pch = 15, xlim = c(-1, 1),
+                   lty = 2, xlab = "p reach goal risky - p reach goal save",
+                   main = "", bty = "l",
+                   cex.lab = 1.5, cex.axis = 1.3, las = 1)
+
+# High 
+evidence_strength2(subset(df.trial, `Goal Condition` == "Goal" & 
+                            `Variance Condition` == "Low" & game > 1), "RST", 2, 10, 
+                   FALSE, FALSE, 1.5, TRUE, 1.5, "l", col= gray(0.55, .7), lwd = 2.25,
+                   ylim = c(0, 1), pch = 17,
+                   lty = 3)
+
+# High 
+evidence_strength2(subset(df.trial, `Goal Condition` == "Goal" & 
+                            `Variance Condition` == "High" & game > 1), "RST", 2, 10, 
+                   FALSE, FALSE, 1.5, TRUE, 1.5, "l", col= gray(0.6, .7), lwd = 2.25,
+                   ylim = c(0, 1), pch = 18,
+                   lty = 4)
+
+# All together
+evidence_strength2(subset(df.trial, `Goal Condition` == "Goal" & game > 1), "RST", 2, 10, 
+                   TRUE, FALSE, 2, TRUE, 1.5, "b", col= gray(0.3, .7), lwd = 3,
+                   cex.lab = 1.5, cex.axis = 1.8, ylim = c(0, 1), pch = 16)
+
+legend("topleft", c("All", "Equal", "High", "Low"), lty = c(1:4),
+       pch = c(16, rep(NA, 3)), lwd = c(3, rep(2.25, 3)), title = "Environment:",
+       col = c(gray(0.3, .7), gray(0.65, .7), gray(0.6, .7), gray(0.55, .7)),
+       bty = "n", cex = 1.5)
+dev.off()
+
+### Goal RST and EV, No Goal EV
 
 pdf("plot/EvidenceStrengths.pdf", width = 10, height = 13.125)
 # All conditions
@@ -162,7 +203,7 @@ evidence_strength2(subset(df.trial, `Goal Condition` == "Goal" &
                             `Variance Condition` == "Equal" & game > 1), "RST", 2, 10, 
                    FALSE, FALSE, 1.5, FALSE, 1.5, "l", col= gray(0.65, .7), lwd = 2.25,
                    ylim = c(0, 1), pch = 15, xlim = c(-1, 1),
-                   lty = 2, xlab = "p reach goal A - p reach goal B",
+                   lty = 2, xlab = "p reach goal risky - p reach goal save",
                    main = "Evidence Strength RST, Goal Condition", bty = "l",
                    cex.lab = 2, cex.axis = 1.6, cex.main = 1.8, las = 1)
 
@@ -185,11 +226,10 @@ evidence_strength2(subset(df.trial, `Goal Condition` == "Goal" & game > 1), "RST
                    TRUE, FALSE, 2, TRUE, 1.5, "b", col= gray(0.3, .7), lwd = 3,
                    cex.lab = 1.5, cex.axis = 1.8, ylim = c(0, 1), pch = 16)
 
-legend("right", c("All", "Equal", "High", "Low"), lty = c(1:4),
+legend("topleft", c("All", "Equal", "High", "Low"), lty = c(1:4),
        pch = c(16, rep(NA, 3)), lwd = c(3, rep(2.25, 3)),
        col = c(gray(0.3, .7), gray(0.65, .7), gray(0.6, .7), gray(0.55, .7)),
        bty = "n", cex = 2)
-
 ### EV evidence strength
 
 # Equal 
@@ -197,7 +237,7 @@ evidence_strength2(subset(df.trial, `Goal Condition` == "Goal" &
                             `Variance Condition` == "Equal" & game > 1), "EV", 2, 10, 
                    FALSE, FALSE, 1.5, FALSE, 1.5, "l", col= gray(0.65, .7), lwd = 2.25,
                    ylim = c(0, 1), pch = 15, xlim = c(-40, 40),
-                   lty = 2, xlab = "d' A - d' B",
+                   lty = 2, xlab = "d' risky - d' save",
                    main = "Evidence Strength EV, Goal Condition", bty = "l",
                    cex.lab = 2, cex.axis = 1.6, cex.main = 1.8, las = 1)
 
@@ -220,7 +260,7 @@ evidence_strength2(subset(df.trial, `Goal Condition` == "Goal" & game > 1), "EV"
                    TRUE, FALSE, 2, TRUE, 1.5, "b", col= gray(0.3, .7), lwd = 3,
                    cex.lab = 1.5, cex.axis = 1.8, ylim = c(0, 1), pch = 16)
 
-legend("right", c("All", "Equal", "High", "Low"), lty = c(1:4),
+legend("topleft", c("All", "Equal", "High", "Low"), lty = c(1:4),
        pch = c(16, rep(NA, 3)), lwd = c(3, rep(2.25, 3)),
        col = c(gray(0.3, .7), gray(0.65, .7), gray(0.6, .7), gray(0.55, .7)),
        bty = "n", cex = 2)
@@ -234,7 +274,7 @@ evidence_strength2(subset(df.trial, `Goal Condition` == "NoGoal" &
                             `Variance Condition` == "Equal" & game > 1), "EV", 2, 10, 
                    FALSE, FALSE, 1.5, FALSE, 1.5, "l", col= gray(0.65, .7), lwd = 2.25,
                    ylim = c(0, 1), pch = 15, xlim = c(-40, 40),
-                   lty = 2, xlab = "d' A - d' B",
+                   lty = 2, xlab = "d' risky - d' save",
                    main = "Evidence Strength EV, No Goal Condition", bty = "l",
                    cex.lab = 2, cex.axis = 1.6, cex.main = 1.8, las = 1)
 
@@ -257,7 +297,7 @@ evidence_strength2(subset(df.trial, `Goal Condition` == "NoGoal" & game > 1), "E
                    TRUE, FALSE, 2, TRUE, 1.5, "b", col= gray(0.3, .7), lwd = 3,
                    cex.lab = 1.5, cex.axis = 1.8, ylim = c(0, 1), pch = 16)
 
-legend("right", c("All", "Equal", "High", "Low"), lty = c(1:4),
+legend("topleft", c("All", "Equal", "High", "Low"), lty = c(1:4),
        pch = c(16, rep(NA, 3)), lwd = c(3, rep(2.25, 3)),
        col = c(gray(0.3, .7), gray(0.65, .7), gray(0.6, .7), gray(0.55, .7)),
        bty = "n", cex = 2)
@@ -441,7 +481,7 @@ par(mfrow = c(1, 1), mar = c(5,6.5,3,1.5))
 plot(temp.df$trial, temp.df$prop,
      ylim = c(0, 1), type = "h", lwd = 10,
      col = gray(0.3, 0.5), xlim = c(0,25), xlab = "Trial Number", main = "",
-     las = 1, cex.axis = 1.2, cex.lab = 1.3, ylab = "Proportion Differing Prediction\n")
+     las = 1, cex.axis = 1.2, cex.lab = 1.3, ylab = "Proportion Differing Predictions\n")
 dev.off()
 
 
@@ -463,6 +503,8 @@ plot(temp.df$trial[temp.df$`Goal Condition` == "NoGoal"], temp.df$prop[temp.df$`
      col = gray(0.3, 0.5), xlim = c(0,25), xlab = "Trial Number", main = "",
      las = 1, cex.axis = 1.2, cex.lab = 1.3, ylab = "Proportion Differing Prediction\n")
 dev.off()
+
+
 
 
 ### check point values when predictions differed vs where the same ----
@@ -668,9 +710,9 @@ segments(0.1, 0.4, 0.7, 0.4, lty = 2, lwd = 2, col = gray(.25, .7))
 
 segments(0.1, 0.28, 0.7, 0.28, lty = 2, lwd = 2, col = gray(.25, .7))
 
-arrows(0.25, 0.55, 0.25, 0.85, lwd = 2)
+arrows(0.25, 0.55, 0.25, 0.90, lwd = 2)
 
-arrows(0.25, 0.55, 0.25, 0.15, lwd = 2)
+arrows(0.25, 0.55, 0.25, 0.20, lwd = 2)
 
 arrows(0.55, 0.45, 0.55, 0.55, lwd = 2)
 

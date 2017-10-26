@@ -34,7 +34,6 @@ if (!require(afex)) install.packages("afex"); library(afex)
 if (!require(coin)) install.packages("coin"); library(coin)
 if (!require(dplyr)) install.packages("dplyr"); library(dplyr)
 
-if (!require(sjPlot)) install.packages("sjPlot"); library(sjPlot)
 
 # Set working directory
 setwd(rprojroot::is_rstudio_project$find_file())
@@ -183,6 +182,7 @@ yarrr::pirateplot(high.var.chosen ~ choose.highvar.subj + variance.condition + g
 with(subset(df.trial, game > 1), mean(pred.EV != pred.RSF, na.rm = TRUE))
 with(subset(df.trial, game > 1), tapply(pred.EV != pred.RSF, variance.condition, mean, na.rm = T))
 with(subset(df.trial, game > 1 & goal.condition == "Goal" & variance.condition == "Low" & trial >= 20), mean(pred.RSF.acc[pred.EV != pred.RSF], na.rm = TRUE))
+
 
 m.pa <- lme4::glmer(pred.RSF.acc ~ goal.condition.f + (1|game) + (1|id.f),
               data = subset(df.trial, game > 1 & pred.EV != pred.RSF), family = binomial)

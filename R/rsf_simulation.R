@@ -20,7 +20,7 @@ source("r/learning_functions.R")
 #  parameters will be simulated
 
 
-sim.dm <- expand.grid(goal = c(0),                               # Goal
+sim.dm <- expand.grid(goal = c(100),                               # Goal
                       n.trials = c(25),                           # Trials in game
                       environment = 1:3,                          # Option environment
                       strategy = c("ev", "rsf", "random"),        # General strategy
@@ -113,16 +113,52 @@ sim.dm.agg <- sim.dm %>% group_by(goal, n.trials, environment, strategy) %>%
   )
 
 
-# Plotting
-yarrr::pirateplot(reach.goal ~ strategy + environment, data = sim.dm)
-yarrr::pirateplot(risky ~ strategy + environment, data = sim.dm)
-#windows(height = 22, width = 33)
-yarrr::pirateplot(risky.ag ~ strategy + environment, data = sim.dm)
-yarrr::pirateplot(risky.ug ~ strategy + environment, data = sim.dm)
+sim.dm$environment[sim.dm$environment == 1] <- "Equal"
+sim.dm$environment[sim.dm$environment == 2] <- "Low"
+sim.dm$environment[sim.dm$environment == 3] <- "High"
+sim.dm$strategy <- as.character(sim.dm$strategy)
+sim.dm$strategy[sim.dm$strategy == "ev"] <- "EV"
+sim.dm$strategy[sim.dm$strategy == "rsf"] <- "RST"
+sim.dm$strategy[sim.dm$strategy == "random"] <- "Random"
+names(sim.dm)[c(1,3,4)] <- c("Goal", "Environment", "Strategy")
 
-yarrr::pirateplot(final.points ~ strategy + environment, data = sim.dm)
-yarrr::pirateplot(diff.pred ~ strategy + environment, data = sim.dm)
+# Plotting
+yarrr::pirateplot(reach.goal ~ Strategy + Environment, data = sim.dm)
+yarrr::pirateplot(risky ~ Strategy + Environment, data = sim.dm)
+#windows(height = 22, width = 33)
+yarrr::pirateplot(risky.ag ~ Strategy + Environment, data = sim.dm)
+yarrr::pirateplot(risky.ug ~ Strategy + Environment, data = sim.dm)
+
+yarrr::pirateplot(final.points ~ Strategy + Environment, data = sim.dm)
 
 mean(sim.dm$final.points >= 100)
 mean(sim.dm$diff.pred, na.rm = T)
+
+
+pdf("plot/simProbReachFoal.pdf", width = 12, height = 4.5)
+
+par(mfrow = c(1, 1), mar = c(5,9.5,3,1.5))
+yarrr::pirateplot(reach.goal ~ Strategy + Environment, data = sim.dm,
+                  ylab = "Proportion Goals Reached\n", xlab = "Condition", main = "",
+                  bean.f.col = c("lightgray", "black", "darkgray"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+dev.off()
+
+
+pdf("plot/simProbRiskyAboveAndUnderGoal.pdf", width = 12, height = 10.5)
+
+par(mfrow = c(2, 1), mar = c(5,9.5,3,1.5))
+yarrr::pirateplot(risky.ug ~ Strategy + Environment, data = sim.dm,
+                  ylab = "Proportion Risky Choices\n", xlab = "Condition", main = "",
+                  bean.f.col = c("lightgray", "black", "gray47"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+yarrr::pirateplot(risky.ag ~ Strategy + Environment, data = sim.dm,
+                  ylab = "Proportion Risky Choices\n", xlab = "Condition", main = "",
+                  bean.f.col = c("lightgray", "black", "gray47"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+dev.off()
+
+
+
+
 

@@ -18,8 +18,7 @@ gc()
 #  - In the EV condition, do people earn more points in later games than early games?
 #  - Do people in the goal condition act more in an RSF way in later games than early games?
 # 
-# Not critical analyses but would I think they would be interesting to see in a plot. If you push the
-# latest results to GitHub I can run the analyses too :)
+# Not critical analyses but would I think they would be interesting to see in a plot.
 # ------------
 
 

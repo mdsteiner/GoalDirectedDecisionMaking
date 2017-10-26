@@ -20,6 +20,7 @@ ggplot(df.trial, aes(y = high.var.chosen, x = trial, col = factor(overGoal))) +
   geom_point(alpha = 0.3) + facet_grid(~variance.condition+goal.condition) + geom_smooth()
 
 ggplot(df.trial, aes(y = high.var.chosen, x = game, col = goal.condition)) +
-  geom_jitter(data = df.game, aes(x = game, y = high.var.chosen.rate),  alpha = 0.15) + facet_grid(~variance.condition) + geom_smooth() + theme_bw()
+  geom_jitter(data = df.game, aes(x = game, y = high.var.chosen.rate),  alpha = 0.15) +
+  facet_grid(~variance.condition) + geom_smooth() + theme_bw()
 
 
