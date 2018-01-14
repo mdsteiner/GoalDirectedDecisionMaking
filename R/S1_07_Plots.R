@@ -63,7 +63,7 @@ df.n <- aggregate(high.var.chosen ~ `Choose Risky` + id + `Goal Condition` + `Va
                   FUN = mean, data = subset(df.trial, game > 1))
 df.n$`Goal Condition`[df.n$`Goal Condition` == "NoGoal"] <- "No Goal"
 
-pdf("plot/pRiskyChooseRisky.pdf", width = 12, height = 10.5)
+pdf("plot/pRiskyChooseRisky.pdf", width = 12, height = 8.5)
 
 par(mar=c(5,9.5,3,1.5), mfrow = c(2,1))
 
