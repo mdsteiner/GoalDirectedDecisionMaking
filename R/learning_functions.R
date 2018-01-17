@@ -109,6 +109,19 @@ p.getthere.fun <- function(points.needed,  # How many points do I need?
 }
 
 
+# reinforcement learning fitting function
+rl_fit <- function(Q, chd, outc){
+  
+  alpha_fit <- Q[1]
+  phi_fit <- Q[2]
+  
+  for (kk in seq_along(chd)){
+    
+  }
+  
+  
+}
+
 # Create main simulation function
 rl.sim.fun <- function(n.trials = 100,                # Trials in game
                        option.mean = c(.5, 1, 1.5),   # Mean of each option
