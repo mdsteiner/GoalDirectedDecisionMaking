@@ -18,9 +18,9 @@ get_samples <- function(samp,        # samp: History of observations
 
 
 # What is the probability I will reach the goal?
-p_getthere <- function(points_need,  # How many points do I need?
-                       trial_rem,      # Trials remaining
-                       mu,             # Mean of distribution(s)
+p_getthere <- function(points_need,    # points_need: How many points do I need?
+                       trial_rem,      # trial_rem: Trials remaining
+                       mu,             # mu: Mean of distribution(s)
                        sigma) {        # SD of distribution(s)
   
   n.options <- length(mu)
@@ -50,7 +50,7 @@ p_getthere <- function(points_need,  # How many points do I need?
 #  version = 'log'
 #  version = 'yb': From Yechiam and Busemeyer (2005)
 
-softmax_Choice <- function(impressions,       # impressions: Vector (or list) of impressions of options
+Softmax_Choice <- function(impressions,       # impressions: Vector (or list) of impressions of options
                            phi,               # phi: Choice sensitivity
                            trial_now,             # trial_now: Current trial
                            version = "log") { # version: Either 'yb' for Yechiam Busemeyer, or 'log' for log version     
@@ -168,47 +168,96 @@ SampEx_Imp <- function(method_extrap = "heuristic",  # method_extrap: 'heuristic
 }
 
 
+# Reinforcement learning updating rule
+RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
+                   selection_v,   # selection_v: Sequential selections made
+                   outcome_v,     # outcome_v: Sequential outcomes observed
+                   option_n = NULL # option_n: Number of options
+                        ){   # points_now: Points at current trial
+
+
+  if(is.null(option_n)) {option_n <- length(unique(selection_v))}
+  
+  # Get prior outcomes of each option
+  prior_outcomes <- lapply(1:option_n, FUN = function(x) {outcome_v[selection_v == x]})
+  
+  impressions <- sapply(1:option_n, FUN = function(x) {
+    
+    # Get prior outcomes of option x
+    prior_outcomes_x <- prior_outcomes[[x]]
+    
+    # If there are no outcomes, set to 0
+    if(length(prior_outcomes_x) == 0) {return(0)}
+    
+    # If there is just one outcome, set to that outcome
+    if(length(prior_outcomes_x) == 1) {return(prior_outcomes_x)}
+    
+    # If there is more than one outcome, use updating rule
+    if(length(prior_outcomes_x) > 1) {
+      
+      # Start with initial outcome
+      impression_x <- prior_outcomes_x[1]
+      
+      # Recursively update with new information
+      for(i in 2:length(prior_outcomes_x)) {
+        
+        # Weight on new information is (1 / outcomes) & alpha_par
+        weight_new <- 1 / i ^ alpha_par
+        
+        # Update impression
+        impression_x <- (1 - weight_new) * impression_x + weight_new * prior_outcomes_x[i]
+        
+      }
+      
+    }  
+  
+    return(impression_x)
+    
+  })
+  
+  # Return vector of impressions
+  return(impressions)
+  
+}
 
 # ---------------------
 # Model Likelihood rules
 # ---------------------
 
-# Sample Extrapolation Likelihood
+# Model_lik
 # Given a set of N and phi parameters, calculates the
 #  likelihood of data
 
-SampEx_Lik <- function(method_extrap,    # method_extrap: Extrapolation method
-                       pars,             # Parameter vector [N, phi]
-                       selection_v,      # selection_v: Selection vector
-                       outcome_v,        # outcome_v: Outcome vector
-                       trial_v,          # trial_v: Vector of trial numbers
-                       game_v,           # game_v: Vector of game numbers
-                       trial_max = NULL, # trial_max: Maximum number of trials in task
-                       points_goal,      # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
-                       option_n = NULL,  # option_n: Number of options
-                       game_n = NULL     # game_n: Number of games
-                       ){ 
-  
+Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choice]
+                      rule_Imp,         # rule_Imp: Impression rule [SampEx_Heur_Imp, SampEx_Int_Imp, RL_Imp]
+                      pars_Choice,      # pars_Choice: Choice parameters
+                      pars_Imp,         # pars_Imp: Impression parameters
+                      selection_v,      # selection_v: Selection vector
+                      outcome_v,        # outcome_v: Outcome vector
+                      trial_v,          # trial_v: Vector of trial numbers
+                      game_v,           # game_v: Vector of game numbers
+                      trial_max = NULL, # trial_max: Maximum number of trials in task
+                      points_goal,      # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
+                      option_n = NULL,  # option_n: Number of options
+                      game_n = NULL     # game_n: Number of games
+                      ){ 
 
+  
   # Fix missing values
   
   if(is.null(option_n)) {option_n <- max(selection_v)}
   if(is.null(game_n)) {game_n <- max(game_v)}
   if(is.null(trial_max)) {trial_max <- max(trial_v)}
   
-  # Get memory_N and phi parameter values
-  memory_N <- round(pars[1])
-  phi <- pars[2]
-  
   # Extract some information
   observations_n <- length(selection_v)
-  
+
   # Placeholder for selection probabilities for all options
   lik_mtx <- data.frame(trial = trial_v,
-                         game = game_v,
+                        game = game_v,
                         selection = selection_v,
-                         lik = NA,
-                         pred = NA)
+                        lik = NA,
+                        pred = NA)
   
   # Placeholders for likelihoods of selecting each option
   lik_mtx[paste0("o_", 1:option_n, "_lik")] <- NA
@@ -219,8 +268,19 @@ SampEx_Lik <- function(method_extrap,    # method_extrap: Extrapolation method
   # Look over trials
   for (trial_i in 1:trial_max) {
 
+  
+    # Get impressions
+    
+  if(grepl("SampEx", rule_Imp)) {
+    
+    # Get points_now
     points_now <- sum(outcome_v[game_v == game_i & trial_v < trial_i])
-
+      
+    # Get memory_N and phi parameter values
+    memory_N <- pars_Imp[1]
+    
+    if(grepl("Heur", rule_Imp)) {method_extrap <- "heuristic"}
+    if(grepl("Int", rule_Imp)) {method_extrap <- "integration"}
     
     # Get impressions
     impressions_i <- SampEx_Imp(method_extrap = method_extrap,
@@ -232,11 +292,34 @@ SampEx_Lik <- function(method_extrap,    # method_extrap: Extrapolation method
                                 points_goal = points_goal,
                                 points_now = points_now)
     
+    }
+    
+    if(rule_Imp %in% c("RL")) {
+      
+      # Get memory_N and phi parameter values
+      alpha_par <- pars_Imp[1]
+      
+      # Get impressions
+      impressions_i <- RL_Imp(alpha_par = alpha_par,
+                              selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                              outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                              option_n = option_n)
+      
+    }
+    
+    # Get choice probs
+    
+    if(rule_Choice == "Softmax") {
+    
+    phi <- pars_Choice[1]
+      
     # Get selection probabilities
-    selprob_v <- softmax_Choice(impressions = impressions_i, 
+    selprob_v <- Softmax_Choice(impressions = impressions_i, 
                                 phi = phi, 
                                 trial_now = trial_i)
     
+
+    }
     
     # Assign absolute prediction to lik_mtx
     pred_abs <- (1:option_n)[selprob_v == max(selprob_v)]
@@ -268,14 +351,18 @@ SampEx_Lik <- function(method_extrap,    # method_extrap: Extrapolation method
   deviance <- -2 * sum(log(lik_mtx$lik))
   
   # Calculate G2
-  g2 <- deviance + 2 * length(pars) * log(observations_n)
+  
+  pars_total <- length(pars_Imp) + length(pars_Choice)
+  
+  g2 <- deviance + 2 * length(pars_total) * log(observations_n)
   
   # Define final output
   
   output <- list(lik_mtx = lik_mtx,
                  deviance = deviance,
                  g2 = g2,
-                 pars = pars)
+                 pars_Choice = pars_Choice,
+                 pars_Imp = pars_Imp)
   
   return(output)
   

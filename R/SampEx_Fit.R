@@ -31,25 +31,49 @@ dat <- dat %>%
 # Number of Subjects
 subjects_N <- length(unique(dat$id))
 
+# Game parameters
+trial_max <- 25
+Goal <- 100
+
 # ---------------------------
 # Set up MLE fitting
 # ----------------------------
 
 # Grid search parameters
 #   The grid search will look over all combinations of these parameters
-N_par_v <- 1:15
-phi_par_v <- seq(0.0, .15, .01)
-models_to_fit <- c("SampEx_Heur_Goal", "SampEx_Heur_NoGoal", "SampEx_Int_Goal", "Random")
-trial_max <- 25
-Goal <- 100
+
+N_par_v <- 1:15                  # N paramter for SampEx Impression
+alpha_par_v <- seq(0, 2, .1)     # Alpha parameter for reinforcement learning Impression
+phi_par_v <- seq(0.0, .15, .01)  # Phi parameter for softmax choice
+
+# Vector of all models to fit to each participant
+models_to_fit <- c("SampEx_Heur_Goal", 
+                   "SampEx_Heur_NoGoal", 
+                   "SampEx_Int_Goal", 
+                   "RL", 
+                   "Random")
+
+# model_lu: Shows the impression and choice rules for each model
+model_lu <- tibble(
+  model = c("SampEx_Heur_Goal", "SampEx_Heur_NoGoal", "SampEx_Int_Goal", "RL", "Random"),
+  goal = c(100, Inf, 100, Inf, Inf),
+  rule_Imp = c("SampExHeur", "SampExHeur", "SampExInt", "RL", "none"),
+  rule_Choice = c("Softmax", "Softmax", "Softmax", "Softmax", "none")
+)
 
 # Maximum number of subjects to fit (for testing)
-subj_max <- 5  # length(unique(dat$id))
+subj_max <- 40  # length(unique(dat$id))
 
 # subj_fits contains all participants and models to be fit
 subj_fits <- expand.grid(id = unique(dat$id)[1:subj_max],   # Reduce the number of participants for testing
                          model = models_to_fit, 
                          stringsAsFactors = FALSE)
+
+# Combine subj_fits with model_lu
+
+subj_fits <- subj_fits %>% 
+  left_join(model_lu)
+
 
 # mle_grid_fun
 #   Takes a row number from subj_fits, and returns MLE estimates for the
@@ -66,44 +90,50 @@ mle_grid_cluster_fun <- function(i) {
   # Get model
   model_i <- subj_fits$model[i]
   
+  # Get goal
+  points_goal_i <- subj_fits$goal[i]
+  
+  # Get rule_Imp
+  rule_Imp_i <- subj_fits$rule_Imp[i]
+  
+  # Get rule_Choice
+  rule_Choice_i <- subj_fits$rule_Choice[i]
+  
   if(model_i != "Random") {
   
-  # Define goal based on model
-  points_goal_i <- ifelse(grepl("Goal", model_i), 
-                          100, 
-                          Inf)
-  
-  # Set up grid search
-  par_grid <- expand.grid(N = N_par_v,
-                          phi = phi_par_v)
+  # Get impression and choice parameter combinations based on models
+    
+  # Impression parameter sequence
+  if(grepl("RL", rule_Imp_i)) {pars_Imp_v <- alpha_par_v}  # RL impression uses alpha
+  if(grepl("SampEx", rule_Imp_i)) {pars_Imp_v <- N_par_v}  # SampEx impression uses N
+    
+  # Choice parameter sequence
+  if(grepl("Softmax", rule_Choice_i)) {pars_Choice_v <- phi_par_v} # Sofmax uses phi
+    
+  # Set up grid search for all combinations of parameters
+  par_grid <- expand.grid(pars_Imp = pars_Imp_v,
+                          pars_Choice = pars_Choice_v)
   
   # Loop over par_grid
   for(par_i in 1:nrow(par_grid)) {
     
     # Get parameters for current run
-    N_i <- par_grid$N[par_i]
-    phi_i <- par_grid$phi[par_i]
-    
-    # Fitting values for SampExGoal and SampExNoGoal models
-    if(model_i %in%c("SampEx_Heur_Goal", "SampEx_Heur_NoGoal", "SampEx_Int_Goal")) {
+    pars_Imp_i <- par_grid$pars_Imp[par_i]
+    pars_Choice_i <- par_grid$pars_Choice[par_i]
       
-      if(grepl("Heur", model_i)) {method_extrap <- "heuristic"}
-      if(grepl("Int", model_i)) {method_extrap <- "integration"}
-      
-      
-    fits_i <- SampEx_Lik(method_extrap = method_extrap,
-                         pars = c(N_i, phi_i),
-                         selection_v = dat_subj$selection,    
-                         outcome_v = dat_subj$outcome,
-                         trial_v = dat_subj$trial,         # trial_v: Vector of trial numbers
-                         game_v = dat_subj$game,           # game_v: Vector of game numbers
-                         trial_max = 25,                   # trial_max: Maximum number of trials in task
-                         points_goal = points_goal_i,      # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
-                         option_n = 2, # option_n: Number of options
-                         game_n = 10)
-    
-    }
-    
+    fits_i <- Model_Lik(rule_Choice = rule_Choice_i,      # Choice rule
+                        rule_Imp = rule_Imp_i,            # Impression rule
+                        pars_Choice = pars_Choice_i,      # Choice parameter(s)
+                        pars_Imp = pars_Imp_i,            # Impression parameter(s)
+                        selection_v = dat_subj$selection, # Selection vector
+                        outcome_v = dat_subj$outcome,     # Outcome vector
+                        trial_v = dat_subj$trial,         # trial_v: Vector of trial numbers
+                        game_v = dat_subj$game,           # game_v: Vector of game numbers
+                        trial_max = 25,                   # trial_max: Maximum number of trials in task
+                        points_goal = points_goal_i,      # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
+                        option_n = 2,                     # option_n: Number of options
+                        game_n = 10)                      # Number of games
+  
     # Assign g2 to par_grid
     par_grid$dev[par_i] <- fits_i$deviance
     par_grid$g2[par_i] <- fits_i$g2
@@ -122,16 +152,16 @@ mle_grid_cluster_fun <- function(i) {
     
     # Set g2 for a random model (and NA paramter values)
     par_grid_min = data.frame(g2 = -2 * sum(log(rep(.5, 25 * 10))),
-                              N_mle = NA,
-                              phi_mle = NA)
+                              pars_Imp = NA,
+                              pars_Choice = NA)
   }
   
   # Return best values
   return(c(id = id_i, 
            model = model_i, 
            g2 = round(par_grid_min$g2, 3),
-           N_mle = par_grid_min$N,
-           phi_mle =  par_grid_min$phi))
+           pars_Imp_mle = par_grid_min$pars_Imp,
+           pars_Choice_mle = par_grid_min$pars_Choice))
   
 }
 
@@ -147,9 +177,14 @@ cl <- makeCluster(cores_n)
 clusterEvalQ(cl, library(tidyverse))
 
 # Export objects to cluster
-clusterExport(cl, list("subj_fits", "N_par_v", "phi_par_v", 
-                       "trial_max", "Goal", "dat", "SampEx_Lik", 
-                       "SampEx_Imp", "get_samples", "softmax_Choice", "p_getthere"))
+clusterExport(cl, list("subj_fits", 
+                       "N_par_v", "phi_par_v", "alpha_par_v",
+                       "trial_max", "Goal", "dat", 
+                       "Model_Lik", 
+                       "SampEx_Imp", "RL_Imp", 
+                       "get_samples", 
+                       "Softmax_Choice", 
+                       "p_getthere"))
 
 # Run cluster!
 cluster_result_ls <- parallel::parLapply(cl = cl,
@@ -169,10 +204,9 @@ cluster_result_df <- as_tibble(do.call(what = rbind,
 cluster_result_df <- cluster_result_df %>%
   mutate(
     g2 = as.numeric(g2),
-    N_mle = as.numeric(N_mle),
-    phi_mle = as.numeric(phi_mle)
+    pars_Imp_mle = as.numeric(pars_Imp_mle),
+    pars_Choice_mle = as.numeric(pars_Choice_mle)
   )
-
 
 # Combine subj_fits with cluster_result_df
 subj_fits <- subj_fits %>%
@@ -186,8 +220,8 @@ model_best <- subj_fits %>%
     N_models = sum(g2 == min(g2)),       # Number of best fitting models (hopefully 1)
     model_best = model[g2 == min(g2)][1],
     model_best_g2 = g2[g2 == min(g2)][1],
-    model_best_N = N_mle[g2 == min(g2)][1],
-    model_best_phi = phi_mle[g2 == min(g2)][1]
+    model_best_Imp = pars_Imp_mle[g2 == min(g2)][1],
+    model_best_Choice = pars_Choice_mle[g2 == min(g2)][1]
   )
 
 # Combine actual participant conditions with best model
