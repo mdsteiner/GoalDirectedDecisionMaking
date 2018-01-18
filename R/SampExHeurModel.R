@@ -4,7 +4,7 @@
 # ---------------------
 
 get_samples <- function(samp,        # samp: History of observations
-                         memory_N) {  # memory_N: Memory
+                        memory_N) {  # memory_N: Memory
   
   if (length(samp) > memory_N){
     new_samp <- samp[length(samp) - memory_N : length(samp)]
@@ -61,7 +61,7 @@ Softmax_Choice <- function(impressions,       # impressions: Vector (or list) of
   # Log version of choice rule
   if (version == "log") {
     
-    p_select <- exp(log(trial_now) ^ phi * impressions) / sum(exp(log(trial_now) ^ phi * impressions))
+    p_select <- exp(log(trial_now) * phi * impressions) / sum(exp(log(trial_now) * phi * impressions))
     
   }
   
@@ -91,7 +91,6 @@ SampEx_Imp <- function(method_extrap = "heuristic",  # method_extrap: 'heuristic
                        trial_now,     # trial_now: Current trial
                        points_goal,   # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
                        points_now){   # points_now: Points at current trial
-  
   
   # Points needed
   points_need <- points_goal - points_now
@@ -241,7 +240,7 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
                       option_n = NULL,  # option_n: Number of options
                       game_n = NULL     # game_n: Number of games
                       ){ 
-
+  
   # Fix missing values
   
   if(is.null(option_n)) {option_n <- max(selection_v)}
@@ -309,11 +308,11 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
     
     if(rule_Choice == "Softmax") {
     
-    phi <- pars_Choice[1]
+    phi_par <- pars_Choice[1]
       
     # Get selection probabilities
     selprob_v <- Softmax_Choice(impressions = impressions_i, 
-                                phi = phi, 
+                                phi = phi_par, 
                                 trial_now = trial_i)
     
 

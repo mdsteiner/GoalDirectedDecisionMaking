@@ -10,7 +10,6 @@ library(parallel)
 # SampExHeur Model fitting
 source("R/SampExHeurModel.R")
 
-
 # ---------------------------
 # Get data
 # ----------------------------
@@ -62,7 +61,7 @@ model_lu <- tibble(
 )
 
 # Maximum number of subjects to fit (for testing)
-subj_max <- 10  # length(unique(dat$id))
+subj_max <- 3  # length(unique(dat$id))
 
 # subj_fits contains all participants and models to be fit
 subj_fits <- expand.grid(id = unique(dat$id)[1:subj_max],   # Reduce the number of participants for testing
@@ -170,7 +169,7 @@ mle_grid_cluster_fun <- function(i) {
 # ----------------------------
 
 # Set up cluster
-cores_n <- 7   # Number of cores to run on
+cores_n <- 2   # Number of cores to run on
 cl <- makeCluster(cores_n)
 
 # Send libraries to cluster
