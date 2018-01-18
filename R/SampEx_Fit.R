@@ -40,6 +40,8 @@ subjects_N <- length(unique(dat$id))
 N_par_v <- 1:15
 phi_par_v <- seq(0.0, .15, .01)
 models_to_fit <- c("SampExGoal", "SampExNoGoal", "Random")
+trial_max <- 25
+Goal <- 100
 
 # Maximum number of subjects to fit (for testing)
 subj_max <- 50  # length(unique(dat$id))
@@ -114,7 +116,7 @@ mle_grid_cluster_fun <- function(i) {
   if(model_i == "Random") {
     
     # Set g2 for a random model (and NA paramter values)
-    par_grid_min = data.frame(g2 = -2 * sum(log(rep(.5, trial_max * 10))),
+    par_grid_min = data.frame(g2 = -2 * sum(log(rep(.5, 25 * 10))),
                               N_mle = NA,
                               phi_mle = NA)
   }
