@@ -6,13 +6,28 @@
 get_samples <- function(samp,        # samp: History of observations
                         memory_N) {  # memory_N: Memory
   
+  
+  # If there are more samples than memory, take the last memory_N outcomes
   if (length(samp) > memory_N){
-    new_samp <- samp[length(samp) - memory_N : length(samp)]
-  } else if (length(samp) > 0){
-    new_samp <- sample(samp, memory_N, replace = TRUE)
-  } else {
-    new_samp <- round(rnorm(memory_N, 0, 1))
+    
+    new_samp <- samp[(length(samp) - memory_N + 1) : length(samp)]
   }
+  
+  # If memory is larger than sample, then take sample
+  if(length(samp) <= memory_N) {
+    
+    new_samp <- samp
+    
+  }
+  
+  # If sample is empty, draw a large random sample
+  if(length(samp) == 0) {
+    
+    new_samp <- rnorm(n = 100, mean = 0, sd = 1)
+    
+  }
+
+  return(new_samp)
   
 }
 

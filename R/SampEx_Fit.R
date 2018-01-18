@@ -28,7 +28,7 @@ dat <- dat %>%
     ) 
 
 # Number of Subjects
-subjects_N <- length(unique(dat$id))
+subjects_N <- 1:10 #length(unique(dat$id))
 
 # Game parameters
 trial_max <- 25
@@ -206,7 +206,8 @@ cluster_result_df <- cluster_result_df %>%
     g2 = as.numeric(g2),
     pars_Imp_mle = as.numeric(pars_Imp_mle),
     pars_Choice_mle = as.numeric(pars_Choice_mle)
-  )
+  ) %>%
+  arrange(id, model)
 
 # Combine subj_fits with cluster_result_df
 subj_fits <- subj_fits %>%
