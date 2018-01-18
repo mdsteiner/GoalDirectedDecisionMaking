@@ -23,8 +23,8 @@ Goal <- 100
 
 
 
-low_RL <- c(0, 0)
-up_RL  <- c(1, 1000)
+low_RL <- c(0, 0.00001)
+up_RL  <- c(1, Inf)
 r_parr_RL <- matrix(NA, ncol = 2, nrow = N_sub)
 r_good_RL <- c()
 r_pred_RL <- c()

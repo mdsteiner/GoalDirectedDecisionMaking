@@ -143,7 +143,7 @@ mle_grid_cluster_fun <- function(i) {
   # Get minimum g2 value and parameters
   
   par_grid_min <- par_grid %>% 
-    filter(g2 == min(g2)) %>%
+    filter(g2 == min(g2, na.rm = TRUE)) %>%
     sample_n(1) # If there are more than 1 best combinations, choose one at random
   
   }

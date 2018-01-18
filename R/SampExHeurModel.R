@@ -61,7 +61,7 @@ Softmax_Choice <- function(impressions,       # impressions: Vector (or list) of
   # Log version of choice rule
   if (version == "log") {
     
-    p_select <- exp(log(trial_now ^ phi) * impressions) / sum(exp(log(trial_now ^ phi) * impressions))
+    p_select <- exp(log(trial_now) ^ phi * impressions) / sum(exp(log(trial_now) ^ phi * impressions))
     
   }
   

@@ -51,7 +51,6 @@ RL_Fit <- function(Q, chd, v_As, v_Bs, exp_prior_start, n_games, n_trials,
     
     exp.prior.mtx[(kk * n_trials - 24) : (kk * n_trials),] <- exp.prior.mtx.temp
     
-    
   }
   
   eee <- rep(NA, length(chd))
@@ -66,6 +65,7 @@ RL_Fit <- function(Q, chd, v_As, v_Bs, exp_prior_start, n_games, n_trials,
   if(pred==TRUE) return((round(eee) == chd))
   
   Gsq <- 2 * sum(chd[chd!=0] * (log(chd[chd!=0]) - log(eee[chd!=0])))
+  
   
   return(Gsq)
   
