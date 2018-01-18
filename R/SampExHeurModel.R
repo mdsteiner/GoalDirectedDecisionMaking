@@ -17,6 +17,31 @@ get_samples <- function(samp,        # samp: History of observations
 }
 
 
+# What is the probability I will reach the goal?
+p_getthere <- function(points_need,  # How many points do I need?
+                       trial_rem,      # Trials remaining
+                       mu,             # Mean of distribution(s)
+                       sigma) {        # SD of distribution(s)
+  
+  n.options <- length(mu)
+  
+  output <- sapply(1:n.options, FUN = function(x) {
+    
+    1 - pnorm(q = points_need,                     # points desired
+              mean = mu[x] * trial_rem,            # Mean
+              sd = sqrt(trial_rem * sigma[x] ^ 2)) # Sd
+    
+  })
+  
+  # Set all probabilities where sigma is 0 to .5
+  output[sigma == 0 | is.na(sigma)] <- .5
+  
+  return(output)
+  
+}
+
+
+
 # ---------------------
 # Choice rules
 # ---------------------
@@ -58,7 +83,8 @@ softmax_Choice <- function(impressions,       # impressions: Vector (or list) of
 # ---------------------
 
 # Sample Exploration impression rule
-SampEx_Imp <- function(memory_N,      # N: the memory capacity. This number of observations is considered
+SampEx_Imp <- function(method_extrap = "heuristic",  # method_extrap: 'heuristic' or 'integration'
+                       memory_N,      # N: the memory capacity. This number of observations is considered
                        selection_v,   # selection_v: Sequential selections made
                        outcome_v,     # outcome_v: Sequential outcomes observed
                        trial_max,     # trial_max: Maximum number of trials
@@ -66,22 +92,27 @@ SampEx_Imp <- function(memory_N,      # N: the memory capacity. This number of o
                        points_goal,   # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
                        points_now){   # points_now: Points at current trial
   
+  
   # Points needed
   points_need <- points_goal - points_now
+  
+  # number of remaining trials
+  trial_rem <- trial_max - trial_now
+  
   
   # get Recent Distribution
   RD_A <- get_samples(outcome_v[selection_v == 1], memory_N)
   RD_B <- get_samples(outcome_v[selection_v == 2], memory_N)
   
+  if(method_extrap == "heuristic") {
+  
   # If goal is finite, impressions are based on likelihood of reaching goal
   if(is.infinite(points_goal) == FALSE) {
   
-  # number of remaining trials
-  t_rem <- trial_max - trial_now
-  
+
   # create Recent Extrapolated Distribution
-  ReD_A <- RD_A * t_rem
-  ReD_B <- RD_B * t_rem
+  ReD_A <- RD_A * trial_rem
+  ReD_B <- RD_B * trial_rem
   
   # for each ReD value, check whether goal is reached or not (ReD binary)
   ReD_bin_A <- ReD_A > points_need
@@ -113,10 +144,29 @@ SampEx_Imp <- function(memory_N,      # N: the memory capacity. This number of o
     
   }
 
+  }
+  
+  if(method_extrap == "integration") {
+    
+    # Impressions are based on the probability of reaching the goal given integration
+    
+    impressions <- c(p_getthere(points_need = points_need, 
+                                trial_rem = trial_rem, 
+                                mu = mean(RD_A), 
+                                sigma = sd(RD_A)),
+                     
+                     p_getthere(points_need = points_need, 
+                                trial_rem = trial_rem, 
+                                mu = mean(RD_B), 
+                                sigma = sd(RD_B)))
+  }
+  
+  
   # Return vector of impressions
   return(impressions)
   
 }
+
 
 
 # ---------------------
@@ -127,7 +177,8 @@ SampEx_Imp <- function(memory_N,      # N: the memory capacity. This number of o
 # Given a set of N and phi parameters, calculates the
 #  likelihood of data
 
-SampEx_Lik <- function(pars,             # Parameter vector [N, phi]
+SampEx_Lik <- function(method_extrap,    # method_extrap: Extrapolation method
+                       pars,             # Parameter vector [N, phi]
                        selection_v,      # selection_v: Selection vector
                        outcome_v,        # outcome_v: Outcome vector
                        trial_v,          # trial_v: Vector of trial numbers
@@ -138,6 +189,7 @@ SampEx_Lik <- function(pars,             # Parameter vector [N, phi]
                        game_n = NULL     # game_n: Number of games
                        ){ 
   
+
   # Fix missing values
   
   if(is.null(option_n)) {option_n <- max(selection_v)}
@@ -148,11 +200,8 @@ SampEx_Lik <- function(pars,             # Parameter vector [N, phi]
   memory_N <- round(pars[1])
   phi <- pars[2]
   
-  
   # Extract some information
   observations_n <- length(selection_v)
-  
-  
   
   # Placeholder for selection probabilities for all options
   lik_mtx <- data.frame(trial = trial_v,
@@ -174,7 +223,8 @@ SampEx_Lik <- function(pars,             # Parameter vector [N, phi]
 
     
     # Get impressions
-    impressions_i <- SampEx_Imp(memory_N = memory_N, 
+    impressions_i <- SampEx_Imp(method_extrap = method_extrap,
+                                memory_N = memory_N, 
                                 selection_v = selection_v[game_v == game_i & trial_v < trial_i],
                                 outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
                                 trial_max = trial_max,

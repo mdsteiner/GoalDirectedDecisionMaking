@@ -39,12 +39,12 @@ subjects_N <- length(unique(dat$id))
 #   The grid search will look over all combinations of these parameters
 N_par_v <- 1:15
 phi_par_v <- seq(0.0, .15, .01)
-models_to_fit <- c("SampExGoal", "SampExNoGoal", "Random")
+models_to_fit <- c("SampEx_Heur_Goal", "SampEx_Heur_NoGoal", "SampEx_Int_Goal", "Random")
 trial_max <- 25
 Goal <- 100
 
 # Maximum number of subjects to fit (for testing)
-subj_max <- 50  # length(unique(dat$id))
+subj_max <- 5  # length(unique(dat$id))
 
 # subj_fits contains all participants and models to be fit
 subj_fits <- expand.grid(id = unique(dat$id)[1:subj_max],   # Reduce the number of participants for testing
@@ -69,7 +69,7 @@ mle_grid_cluster_fun <- function(i) {
   if(model_i != "Random") {
   
   # Define goal based on model
-  points_goal_i <- ifelse(model_i == "SampExGoal", 
+  points_goal_i <- ifelse(grepl("Goal", model_i), 
                           100, 
                           Inf)
   
@@ -85,9 +85,14 @@ mle_grid_cluster_fun <- function(i) {
     phi_i <- par_grid$phi[par_i]
     
     # Fitting values for SampExGoal and SampExNoGoal models
-    if(model_i %in% c("SampExGoal", "SampExNoGoal")) {
+    if(model_i %in%c("SampEx_Heur_Goal", "SampEx_Heur_NoGoal", "SampEx_Int_Goal")) {
       
-    fits_i <- SampEx_Lik(pars = c(N_i, phi_i),
+      if(grepl("Heur", model_i)) {method_extrap <- "heuristic"}
+      if(grepl("Int", model_i)) {method_extrap <- "integration"}
+      
+      
+    fits_i <- SampEx_Lik(method_extrap = method_extrap,
+                         pars = c(N_i, phi_i),
                          selection_v = dat_subj$selection,    
                          outcome_v = dat_subj$outcome,
                          trial_v = dat_subj$trial,         # trial_v: Vector of trial numbers
@@ -144,7 +149,7 @@ clusterEvalQ(cl, library(tidyverse))
 # Export objects to cluster
 clusterExport(cl, list("subj_fits", "N_par_v", "phi_par_v", 
                        "trial_max", "Goal", "dat", "SampEx_Lik", 
-                       "SampEx_Imp", "get_samples", "softmax_Choice"))
+                       "SampEx_Imp", "get_samples", "softmax_Choice", "p_getthere"))
 
 # Run cluster!
 cluster_result_ls <- parallel::parLapply(cl = cl,
