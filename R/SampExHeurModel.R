@@ -221,7 +221,7 @@ RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
 }
 
 # ---------------------
-# Model Likelihood rules
+# Model Likelihood
 # ---------------------
 
 # Model_lik
@@ -242,7 +242,6 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
                       game_n = NULL     # game_n: Number of games
                       ){ 
 
-  
   # Fix missing values
   
   if(is.null(option_n)) {option_n <- max(selection_v)}
@@ -267,7 +266,6 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   
   # Look over trials
   for (trial_i in 1:trial_max) {
-
   
     # Get impressions
     
@@ -351,10 +349,9 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   deviance <- -2 * sum(log(lik_mtx$lik))
   
   # Calculate G2
-  
   pars_total <- length(pars_Imp) + length(pars_Choice)
   
-  g2 <- deviance + 2 * length(pars_total) * log(observations_n)
+  g2 <- deviance + 2 * pars_total * log(observations_n)
   
   # Define final output
   

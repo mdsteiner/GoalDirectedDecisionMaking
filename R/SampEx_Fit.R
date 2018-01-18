@@ -44,14 +44,14 @@ Goal <- 100
 
 N_par_v <- 1:15                  # N paramter for SampEx Impression
 alpha_par_v <- seq(0, 2, .1)     # Alpha parameter for reinforcement learning Impression
-phi_par_v <- seq(0.0, .15, .01)  # Phi parameter for softmax choice
+phi_par_v <- seq(0.0, .2, .01)  # Phi parameter for softmax choice
 
 # Vector of all models to fit to each participant
-models_to_fit <- c("SampEx_Heur_Goal", 
-                   "SampEx_Heur_NoGoal", 
-                   "SampEx_Int_Goal", 
-                   "RL", 
-                   "Random")
+models_to_fit <- c("SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
+                   "SampEx_Heur_NoGoal",  # Sample extrapolation with Heuristic and NoGoal
+                   "SampEx_Int_Goal",     # Sample extrapolation with Integration and Goal
+                   "RL",                  # Reinforcement learning
+                   "Random")              # Random choice
 
 # model_lu: Shows the impression and choice rules for each model
 model_lu <- tibble(
@@ -62,7 +62,7 @@ model_lu <- tibble(
 )
 
 # Maximum number of subjects to fit (for testing)
-subj_max <- 40  # length(unique(dat$id))
+subj_max <- 10  # length(unique(dat$id))
 
 # subj_fits contains all participants and models to be fit
 subj_fits <- expand.grid(id = unique(dat$id)[1:subj_max],   # Reduce the number of participants for testing
@@ -151,7 +151,7 @@ mle_grid_cluster_fun <- function(i) {
   if(model_i == "Random") {
     
     # Set g2 for a random model (and NA paramter values)
-    par_grid_min = data.frame(g2 = -2 * sum(log(rep(.5, 25 * 10))),
+    par_grid_min <- data.frame(g2 = -2 * sum(log(rep(.5, 25 * 10))),
                               pars_Imp = NA,
                               pars_Choice = NA)
   }
@@ -192,6 +192,7 @@ cluster_result_ls <- parallel::parLapply(cl = cl,
                                          X = 1:nrow(subj_fits))
 
 stopCluster(cl)  # Stop cluster
+
 # ---------------------------
 # Organise cluster results
 # ----------------------------
@@ -213,7 +214,6 @@ subj_fits <- subj_fits %>%
   left_join(cluster_result_df)
 
 # Get the best model for each subject
-
 model_best <- subj_fits %>%
   group_by(id) %>%
   summarise(
@@ -235,7 +235,6 @@ model_best <- dat %>%
   ungroup() %>%
   left_join(model_best)   # Add modelling results
 
-
 # Table of results
 table(model_best$model_best, model_best$goal.condition)
 
@@ -245,58 +244,3 @@ table(model_best$model_best, model_best$goal.condition)
 
 
 
-
-# 
-# fitruns <- 2
-# Nstart <- 400
-# 
-# for (ii in seq_len(subjects_N)){
-# 
-#   temp_fit_SampEx <- Inf
-# 
-#   for(ww in 1:fitruns){
-#     startp_SampEx <- t(replicate(Nstart,
-#                                  c(round(runif(1, 0, 14)), runif(1, 0.0001, 2))))
-# 
-#     fit_ind <- dat$id == dat$id[ii]
-#     v_As_temp <- ifelse(dat$selection[fit_ind] == 0, dat$outcome[fit_ind], NA)
-#     v_Bs_temp <- ifelse(dat$selection[fit_ind] == 1, dat$outcome[fit_ind], NA)
-# 
-# 
-#     grid_SampEx <- apply(startp_SampEx, 1, SampExFit, chd = dat$selection[fit_ind],
-#                          v_As = v_As_temp, v_Bs = v_Bs_temp, T = N_trial,
-#                          curr_t = dat$trial[fit_ind], goal = Goal,
-#                          curr_Y = dat$points.cum[fit_ind])
-# 
-# 
-#     tfit_SampEx <- optim(startp_SampEx[which.min(grid_SampEx),], SampExFit,
-#                          method = "L-BFGS-B", lower = low_SampEx,
-#                          upper = up_SampEx, chd = dat$selection[fit_ind],
-#                          v_As = v_As_temp, v_Bs = v_Bs_temp, T = N_trial,
-#                          curr_t = dat$trial[fit_ind], goal = Goal,
-#                          curr_Y = dat$points.cum[fit_ind])
-#     if(tfit_SampEx$val < temp_fit_SampEx){
-#       temp_fit_SampEx <- tfit_SampEx$val
-#       fit_SampEx <- tfit_SampEx
-#     }
-#   }
-# 
-# 
-#   r_good_SampEx[ii] <- fit_SampEx$val
-#   r_parr_SampEx[ii,] <- fit_SampEx$par
-# 
-#   r_pred_SampEx[ii] <- mean(SampExFit(fit_SampEx$par,chd = dat$selection[fit_ind],
-#                                       v_As = v_As_temp, v_Bs = v_Bs_temp,
-#                                       T = N_trial, curr_t = dat$trial[fit_ind],
-#                                       goal = Goal, curr_Y = dat$points.cum[fit_ind],
-#                                       pred=TRUE))
-# 
-# 
-# 
-# }
-# 
-# med_par_SampEx <- apply(r_parr_SampEx, 2, median)
-# 
-# hist(r_pred_SampEx)
-# 
-# save.image("data/Study1Data/useData/SampExHeur_Fits.RData")
