@@ -35,16 +35,13 @@ subjects_N <- length(unique(dat$id))
 # Set up MLE fitting
 # ----------------------------
 
-# Game level parameters
-trial_max <- 25 # Number of trials
-Goal <- 100 # Goal
-
 # Grid search parameters
 #   The grid search will look over all combinations of these parameters
 N_par_v <- 1:15
 phi_par_v <- seq(0.0, .15, .01)
 models_to_fit <- c("SampExGoal", "SampExNoGoal", "Random")
 
+# Maximum number of subjects to fit (for testing)
 subj_max <- 50  # length(unique(dat$id))
 
 # subj_fits contains all participants and models to be fit
@@ -89,11 +86,11 @@ mle_grid_cluster_fun <- function(i) {
     if(model_i %in% c("SampExGoal", "SampExNoGoal")) {
       
     fits_i <- SampEx_Lik(pars = c(N_i, phi_i),
-                         selection_v = dat_subj$selection + 1,    
+                         selection_v = dat_subj$selection,    
                          outcome_v = dat_subj$outcome,
-                         trial_v = dat_subj$trial,          # trial_v: Vector of trial numbers
+                         trial_v = dat_subj$trial,         # trial_v: Vector of trial numbers
                          game_v = dat_subj$game,           # game_v: Vector of game numbers
-                         trial_max = trial_max,        # trial_max: Maximum number of trials in task
+                         trial_max = 25,                   # trial_max: Maximum number of trials in task
                          points_goal = points_goal_i,      # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
                          option_n = 2, # option_n: Number of options
                          game_n = 10)
