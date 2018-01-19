@@ -10,6 +10,7 @@ library(parallel)
 # SampExHeur Model fitting
 source("R/SampExHeurModel.R")
 
+
 # ---------------------------
 # Get data
 # ----------------------------
@@ -28,7 +29,7 @@ dat <- dat %>%
     ) 
 
 # Number of Subjects
-subjects_N <- 1:10 #length(unique(dat$id))
+subjects_N <- length(unique(dat$id))
 
 # Game parameters
 trial_max <- 25
@@ -61,7 +62,7 @@ model_lu <- tibble(
 )
 
 # Maximum number of subjects to fit (for testing)
-subj_max <- 3  # length(unique(dat$id))
+subj_max <- length(unique(dat$id))
 
 # subj_fits contains all participants and models to be fit
 subj_fits <- expand.grid(id = unique(dat$id)[1:subj_max],   # Reduce the number of participants for testing
@@ -142,7 +143,7 @@ mle_grid_cluster_fun <- function(i) {
   # Get minimum g2 value and parameters
   
   par_grid_min <- par_grid %>% 
-    filter(g2 == min(g2, na.rm = TRUE)) %>%
+    filter(g2 == min(g2)) %>%
     sample_n(1) # If there are more than 1 best combinations, choose one at random
   
   }
@@ -169,7 +170,7 @@ mle_grid_cluster_fun <- function(i) {
 # ----------------------------
 
 # Set up cluster
-cores_n <- 2   # Number of cores to run on
+cores_n <- 7   # Number of cores to run on
 cl <- makeCluster(cores_n)
 
 # Send libraries to cluster
@@ -206,8 +207,7 @@ cluster_result_df <- cluster_result_df %>%
     g2 = as.numeric(g2),
     pars_Imp_mle = as.numeric(pars_Imp_mle),
     pars_Choice_mle = as.numeric(pars_Choice_mle)
-  ) %>%
-  arrange(id, model)
+  )
 
 # Combine subj_fits with cluster_result_df
 subj_fits <- subj_fits %>%
