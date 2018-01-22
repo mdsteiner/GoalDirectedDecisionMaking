@@ -365,7 +365,7 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   # Calculate G2
   pars_total <- length(pars_Imp) + length(pars_Choice)
   
-  g2 <- deviance + 2 * pars_total * log(observations_n)
+  g2 <- deviance + pars_total * log(observations_n)
   
   # Define final output
   
