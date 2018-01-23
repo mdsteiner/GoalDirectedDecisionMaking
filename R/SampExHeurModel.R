@@ -359,19 +359,22 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   lik_mtx$lik[lik_mtx$lik > .999] <- .999
   lik_mtx$lik[lik_mtx$lik < .001] <- .001
   
-  # Calculate deviance
+  # Calculate deviance: -2 times sum of log likelihoods
   deviance <- -2 * sum(log(lik_mtx$lik))
   
-  # Calculate G2
+  # Calculate bic
+  # BIC = -2 * ln(Lik) + K * log(N)
+  #  Based on Lewandowsky & Farrell, Computational Modeling in Cognition, p 184, equation 5.13
+  
   pars_total <- length(pars_Imp) + length(pars_Choice)
   
-  g2 <- deviance + pars_total * log(observations_n)
+  bic <- deviance + pars_total * log(observations_n)
   
   # Define final output
   
   output <- list(lik_mtx = lik_mtx,
                  deviance = deviance,
-                 g2 = g2,
+                 bic = bic,
                  pars_Choice = pars_Choice,
                  pars_Imp = pars_Imp)
   
