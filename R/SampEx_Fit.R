@@ -29,7 +29,7 @@ dat <- dat %>%
     ) 
 
 # Number of Subjects
-subjects_N <- length(unique(dat$id))
+subj_max <- 1 # length(unique(dat$id))
 
 # Game parameters
 trial_max <- 25
@@ -61,11 +61,8 @@ model_lu <- tibble(
   rule_Choice = c("Softmax", "Softmax", "Softmax", "Softmax", "none")
 )
 
-# Maximum number of subjects to fit (for testing)
-subj_max <- length(unique(dat$id))
-
 # subj_fits contains all participants and models to be fit
-subj_fits <- expand.grid(id = unique(dat$id)[1:subj_max],   # Reduce the number of participants for testing
+subj_fits <- expand.grid(id = unique(dat$id)[1:min(c(subj_max, length(unique(dat$id))))],   # Reduce the number of participants for testing
                          model = models_to_fit, 
                          stringsAsFactors = FALSE)
 
@@ -170,7 +167,7 @@ mle_grid_cluster_fun <- function(i) {
 # ----------------------------
 
 # Set up cluster
-cores_n <- 7   # Number of cores to run on
+cores_n <- 3   # Number of cores to run on
 cl <- makeCluster(cores_n)
 
 # Send libraries to cluster
