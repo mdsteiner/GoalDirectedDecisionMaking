@@ -29,7 +29,7 @@ dat <- dat %>%
     ) 
 
 # Number of Subjects
-subjects_N <- length(unique(dat$id))
+subj_max <- 1 # length(unique(dat$id))
 
 # Game parameters
 trial_max <- 25
@@ -61,11 +61,8 @@ model_lu <- tibble(
   rule_Choice = c("Softmax", "Softmax", "Softmax", "Softmax", "none")
 )
 
-# Maximum number of subjects to fit (for testing)
-subj_max <- length(unique(dat$id))
-
 # subj_fits contains all participants and models to be fit
-subj_fits <- expand.grid(id = unique(dat$id)[1:subj_max],   # Reduce the number of participants for testing
+subj_fits <- expand.grid(id = unique(dat$id)[1:min(c(subj_max, length(unique(dat$id))))],   # Reduce the number of participants for testing
                          model = models_to_fit, 
                          stringsAsFactors = FALSE)
 
@@ -134,24 +131,24 @@ mle_grid_cluster_fun <- function(i) {
                         option_n = 2,                     # option_n: Number of options
                         game_n = 10)                      # Number of games
   
-    # Assign g2 to par_grid
+    # Assign bic to par_grid
     par_grid$dev[par_i] <- fits_i$deviance
-    par_grid$g2[par_i] <- fits_i$g2
+    par_grid$bic[par_i] <- fits_i$bic
     
   }
   
-  # Get minimum g2 value and parameters
+  # Get minimum bic value and parameters
   
   par_grid_min <- par_grid %>% 
-    filter(g2 == min(g2)) %>%
+    filter(bic == min(bic)) %>%
     sample_n(1) # If there are more than 1 best combinations, choose one at random
   
   }
   
   if(model_i == "Random") {
     
-    # Set g2 for a random model (and NA paramter values)
-    par_grid_min <- data.frame(g2 = -2 * sum(log(rep(.5, 25 * 10))),
+    # Set bic for a random model (and NA paramter values)
+    par_grid_min <- data.frame(bic = -2 * sum(log(rep(.5, 25 * 10))),
                               pars_Imp = NA,
                               pars_Choice = NA)
   }
@@ -159,7 +156,7 @@ mle_grid_cluster_fun <- function(i) {
   # Return best values
   return(c(id = id_i, 
            model = model_i, 
-           g2 = round(par_grid_min$g2, 3),
+           bic = round(par_grid_min$bic, 3),
            pars_Imp_mle = par_grid_min$pars_Imp,
            pars_Choice_mle = par_grid_min$pars_Choice))
   
@@ -170,7 +167,7 @@ mle_grid_cluster_fun <- function(i) {
 # ----------------------------
 
 # Set up cluster
-cores_n <- 7   # Number of cores to run on
+cores_n <- 3   # Number of cores to run on
 cl <- makeCluster(cores_n)
 
 # Send libraries to cluster
@@ -204,7 +201,7 @@ cluster_result_df <- as_tibble(do.call(what = rbind,
 # Convert numeric values
 cluster_result_df <- cluster_result_df %>%
   mutate(
-    g2 = as.numeric(g2),
+    bic = as.numeric(bic),
     pars_Imp_mle = as.numeric(pars_Imp_mle),
     pars_Choice_mle = as.numeric(pars_Choice_mle)
   )
@@ -218,11 +215,11 @@ subj_fits <- subj_fits %>%
 model_best <- subj_fits %>%
   group_by(id) %>%
   summarise(
-    N_models = sum(g2 == min(g2)),       # Number of best fitting models (hopefully 1)
-    model_best = model[g2 == min(g2)][1],
-    model_best_g2 = g2[g2 == min(g2)][1],
-    model_best_Imp = pars_Imp_mle[g2 == min(g2)][1],
-    model_best_Choice = pars_Choice_mle[g2 == min(g2)][1]
+    N_models = sum(bic == min(bic)),       # Number of best fitting models (hopefully 1)
+    model_best = model[bic == min(bic)][1],
+    model_best_bic = bic[bic == min(bic)][1],
+    model_best_Imp = pars_Imp_mle[bic == min(bic)][1],
+    model_best_Choice = pars_Choice_mle[bic == min(bic)][1]
   )
 
 # Combine actual participant conditions with best model
