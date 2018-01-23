@@ -1,11 +1,13 @@
 # get modeling results
+library(tidyverse)
+
 
 load("data/Study1Data/useData/model_comparison01.RData")
 
 
 subj_fits <- subj_fits %>%
   mutate(g2 = case_when(model == "SampEx_Int_Goal" ~ g2 - log(250),
-                        model != "Random" ~ g2 - 2* log(250),
+                        model != "Random" ~ g2 - 2 * log(250),
                         TRUE ~ g2))
 # Get the best model for each subject
 model_best <- subj_fits %>%
