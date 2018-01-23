@@ -26,7 +26,7 @@ get_samples <- function(samp,        # samp: History of observations
     new_samp <- rnorm(n = 100, mean = 0, sd = 1)
     
   }
-
+  
   return(new_samp)
   
 }
@@ -84,9 +84,9 @@ Softmax_Choice <- function(impressions,       # impressions: Vector (or list) of
   if (version == "yb") {
     
     p_select <- exp((trial_now / 10) ^ phi * impressions) / sum(exp((trial_now / 10) ^ phi * impressions))
-
+    
   }
-
+  
   # Vector of selection probabilities
   return(p_select)
   
@@ -119,45 +119,45 @@ SampEx_Imp <- function(method_extrap = "heuristic",  # method_extrap: 'heuristic
   RD_B <- get_samples(outcome_v[selection_v == 2], memory_N)
   
   if(method_extrap == "heuristic") {
-  
-  # If goal is finite, impressions are based on likelihood of reaching goal
-  if(is.infinite(points_goal) == FALSE) {
-  
-
-  # create Recent Extrapolated Distribution
-  ReD_A <- RD_A * trial_rem
-  ReD_B <- RD_B * trial_rem
-  
-  # for each ReD value, check whether goal is reached or not (ReD binary)
-  ReD_bin_A <- ReD_A > points_need
-  ReD_bin_B <- ReD_B > points_need
-  
-  # calculate likelihood of reaching the goal from ReD
-  pi_A <- mean(ReD_bin_A)
-  pi_B <- mean(ReD_bin_B)
-  
-  # If values are the same, go with mean of ReD
-  if(pi_A == pi_B) {
     
-    impressions <- c(mean(RD_A), mean(RD_B))
+    # If goal is finite, impressions are based on likelihood of reaching goal
+    if(is.infinite(points_goal) == FALSE) {
+      
+      
+      # create Recent Extrapolated Distribution
+      ReD_A <- RD_A * trial_rem
+      ReD_B <- RD_B * trial_rem
+      
+      # for each ReD value, check whether goal is reached or not (ReD binary)
+      ReD_bin_A <- ReD_A > points_need
+      ReD_bin_B <- ReD_B > points_need
+      
+      # calculate likelihood of reaching the goal from ReD
+      pi_A <- mean(ReD_bin_A)
+      pi_B <- mean(ReD_bin_B)
+      
+      # If values are the same, go with mean of ReD
+      if(pi_A == pi_B) {
+        
+        impressions <- c(mean(RD_A), mean(RD_B))
+        
+      } else {
+        
+        # Impressions are likelihood of reaching goal from each option
+        impressions <- c(pi_A, pi_B)
+        
+      }
+      
+    }
     
-  } else {
+    # If goal is infinite, then just go with mean of RDs
+    if(is.infinite(points_goal) == TRUE) {
+      
+      # Impressions are likelihood of reaching goal from each option
+      impressions <- c(mean(RD_A), mean(RD_B))
+      
+    }
     
-  # Impressions are likelihood of reaching goal from each option
-  impressions <- c(pi_A, pi_B)
-  
-  }
-  
-  }
-  
-  # If goal is infinite, then just go with mean of RDs
-  if(is.infinite(points_goal) == TRUE) {
-    
-    # Impressions are likelihood of reaching goal from each option
-    impressions <- c(mean(RD_A), mean(RD_B))
-    
-  }
-
   }
   
   if(method_extrap == "integration") {
@@ -187,9 +187,9 @@ RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
                    selection_v,   # selection_v: Sequential selections made
                    outcome_v,     # outcome_v: Sequential outcomes observed
                    option_n = NULL # option_n: Number of options
-                        ){   # points_now: Points at current trial
-
-
+){   # points_now: Points at current trial
+  
+  
   if(is.null(option_n)) {option_n <- length(unique(selection_v))}
   
   # Get prior outcomes of each option
@@ -224,7 +224,7 @@ RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
       }
       
     }  
-  
+    
     return(impression_x)
     
   })
@@ -254,7 +254,7 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
                       points_goal,      # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
                       option_n = NULL,  # option_n: Number of options
                       game_n = NULL     # game_n: Number of games
-                      ){ 
+){ 
   
   # Fix missing values
   
@@ -264,7 +264,7 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   
   # Extract some information
   observations_n <- length(selection_v)
-
+  
   # Placeholder for selection probabilities for all options
   lik_mtx <- data.frame(trial = trial_v,
                         game = game_v,
@@ -277,78 +277,78 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   
   # Loop over games
   for(game_i in 1:game_n) {
-  
-  # Look over trials
-  for (trial_i in 1:trial_max) {
-  
-    # Get impressions
     
-  if(grepl("SampEx", rule_Imp)) {
-    
-    # Get points_now
-    points_now <- sum(outcome_v[game_v == game_i & trial_v < trial_i])
-      
-    # Get memory_N and phi parameter values
-    memory_N <- pars_Imp[1]
-    
-    if(grepl("Heur", rule_Imp)) {method_extrap <- "heuristic"}
-    if(grepl("Int", rule_Imp)) {method_extrap <- "integration"}
-    
-    # Get impressions
-    impressions_i <- SampEx_Imp(method_extrap = method_extrap,
-                                memory_N = memory_N, 
-                                selection_v = selection_v[game_v == game_i & trial_v < trial_i],
-                                outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
-                                trial_max = trial_max,
-                                trial_now = trial_i,
-                                points_goal = points_goal,
-                                points_now = points_now)
-    
-    }
-    
-    if(rule_Imp %in% c("RL")) {
-      
-      # Get memory_N and phi parameter values
-      alpha_par <- pars_Imp[1]
+    # Look over trials
+    for (trial_i in 1:trial_max) {
       
       # Get impressions
-      impressions_i <- RL_Imp(alpha_par = alpha_par,
-                              selection_v = selection_v[game_v == game_i & trial_v < trial_i],
-                              outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
-                              option_n = option_n)
+      
+      if(grepl("SampEx", rule_Imp)) {
+        
+        # Get points_now
+        points_now <- sum(outcome_v[game_v == game_i & trial_v < trial_i])
+        
+        # Get memory_N and phi parameter values
+        memory_N <- pars_Imp[1]
+        
+        if(grepl("Heur", rule_Imp)) {method_extrap <- "heuristic"}
+        if(grepl("Int", rule_Imp)) {method_extrap <- "integration"}
+        
+        # Get impressions
+        impressions_i <- SampEx_Imp(method_extrap = method_extrap,
+                                    memory_N = memory_N, 
+                                    selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                    outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                    trial_max = trial_max,
+                                    trial_now = trial_i,
+                                    points_goal = points_goal,
+                                    points_now = points_now)
+        
+      }
+      
+      if(rule_Imp %in% c("RL")) {
+        
+        # Get memory_N and phi parameter values
+        alpha_par <- pars_Imp[1]
+        
+        # Get impressions
+        impressions_i <- RL_Imp(alpha_par = alpha_par,
+                                selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                option_n = option_n)
+        
+      }
+      
+      # Get choice probs
+      
+      if(rule_Choice == "Softmax") {
+        
+        phi_par <- pars_Choice[1]
+        
+        # Get selection probabilities
+        selprob_v <- Softmax_Choice(impressions = impressions_i, 
+                                    phi = phi_par, 
+                                    trial_now = trial_i)
+        
+        
+      }
+      
+      # Assign absolute prediction to lik_mtx
+      pred_abs <- (1:option_n)[selprob_v == max(selprob_v)]
+      if(length(pred_abs) > 1) {pred_abs <- sample(pred_abs, size = 1)}
+      lik_mtx$pred[lik_mtx$game == game_i & lik_mtx$trial == trial_i] <- pred_abs
+      
+      # Assign vector of selection probabilities to lik_mtx
+      lik_mtx[lik_mtx$game == game_i & lik_mtx$trial == trial_i, paste0("o_", 1:option_n, "_lik")] <- round(selprob_v, 3)
+      
+      # Get likelihood of selection on current trial
+      selection_i <- selection_v[trial_v == trial_i & game_v == game_i]
+      selprob_i <- round(selprob_v[selection_i], 3)
+      
+      # Assign to selprob_mtx
+      lik_mtx$lik[lik_mtx$trial == trial_i & lik_mtx$game == game_i] <- selprob_i
       
     }
-    
-    # Get choice probs
-    
-    if(rule_Choice == "Softmax") {
-    
-    phi_par <- pars_Choice[1]
-      
-    # Get selection probabilities
-    selprob_v <- Softmax_Choice(impressions = impressions_i, 
-                                phi = phi_par, 
-                                trial_now = trial_i)
-    
-
-    }
-    
-    # Assign absolute prediction to lik_mtx
-    pred_abs <- (1:option_n)[selprob_v == max(selprob_v)]
-    if(length(pred_abs) > 1) {pred_abs <- sample(pred_abs, size = 1)}
-    lik_mtx$pred[lik_mtx$game == game_i & lik_mtx$trial == trial_i] <- pred_abs
-    
-    # Assign vector of selection probabilities to lik_mtx
-    lik_mtx[lik_mtx$game == game_i & lik_mtx$trial == trial_i, paste0("o_", 1:option_n, "_lik")] <- round(selprob_v, 3)
-    
-    # Get likelihood of selection on current trial
-    selection_i <- selection_v[trial_v == trial_i & game_v == game_i]
-    selprob_i <- round(selprob_v[selection_i], 3)
-    
-    # Assign to selprob_mtx
-    lik_mtx$lik[lik_mtx$trial == trial_i & lik_mtx$game == game_i] <- selprob_i
-    
-  }
     
   }
   
@@ -365,7 +365,7 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   # Calculate G2
   pars_total <- length(pars_Imp) + length(pars_Choice)
   
-  g2 <- deviance + pars_total * log(observations_n)
+  g2 <- deviance + 2 * pars_total * log(observations_n)
   
   # Define final output
   
@@ -378,8 +378,8 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   return(output)
   
 }
-           
-          
+
+
 
 
 

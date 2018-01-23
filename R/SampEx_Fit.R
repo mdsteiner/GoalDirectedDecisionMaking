@@ -210,6 +210,7 @@ cluster_result_df <- cluster_result_df %>%
 subj_fits <- subj_fits %>%
   left_join(cluster_result_df)
 
+
 # Get the best model for each subject
 model_best <- subj_fits %>%
   group_by(id) %>%
