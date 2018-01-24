@@ -15,8 +15,18 @@ source("R/SampExHeurModel.R")
 # Get data
 # ----------------------------
 
-# get trial level data
-dat <- as_tibble(readRDS("data/Study1Data/useData/S1_dataTrialLevel.rds"))
+modelRecovery <- TRUE
+
+if (modelRecovery){
+  
+  dat <- as_tibble(readRDS("data/Study1Data/useData/ModelSimDat.rds"))
+  
+} else {
+  # get trial level data
+  dat <- as_tibble(readRDS("data/Study1Data/useData/S1_dataTrialLevel.rds"))
+}
+
+
 
 # Data cleaning
 dat <- dat %>%
@@ -29,7 +39,7 @@ dat <- dat %>%
     ) 
 
 # Number of Subjects
-subj_max <- 1 # length(unique(dat$id))
+subj_max <- 2 #length(unique(dat$id))
 
 # Game parameters
 trial_max <- 25
@@ -42,23 +52,24 @@ Goal <- 100
 # Grid search parameters
 #   The grid search will look over all combinations of these parameters
 
-N_par_v <- 1:15                  # N paramter for SampEx Impression
-alpha_par_v <- seq(0, 2, .1)     # Alpha parameter for reinforcement learning Impression
-phi_par_v <- seq(0.0, .2, .01)  # Phi parameter for softmax choice
+N_par_v <- 1:20                  # N paramter for SampEx Impression
+alpha_par_v <- seq(0, 8, .1)     # Alpha parameter for reinforcement learning Impression
+phi_par_v <- seq(0.0, 8, .1)  # Phi parameter for softmax choice
 
 # Vector of all models to fit to each participant
-models_to_fit <- c("SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
-                   "SampEx_Heur_NoGoal",  # Sample extrapolation with Heuristic and NoGoal
+models_to_fit <- c(#"SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
+                   #"SampEx_Heur_NoGoal",  # Sample extrapolation with Heuristic and NoGoal
+                   "NaturalMean",         # Natural Mean Model
                    "SampEx_Int_Goal",     # Sample extrapolation with Integration and Goal
                    "RL",                  # Reinforcement learning
                    "Random")              # Random choice
 
 # model_lu: Shows the impression and choice rules for each model
 model_lu <- tibble(
-  model = c("SampEx_Heur_Goal", "SampEx_Heur_NoGoal", "SampEx_Int_Goal", "RL", "Random"),
-  goal = c(100, Inf, 100, Inf, Inf),
-  rule_Imp = c("SampExHeur", "SampExHeur", "SampExInt", "RL", "none"),
-  rule_Choice = c("Softmax", "Softmax", "Softmax", "Softmax", "none")
+  model = c("NaturalMean", "SampEx_Int_Goal", "RL", "Random"), # "SampEx_Heur_Goal", "SampEx_Heur_NoGoal"
+  goal = c(Inf, 100, Inf, Inf), # 100, Inf
+  rule_Imp = c("Mean", "SampExInt", "RL", "none"), #"SampExHeur", "SampExHeur"
+  rule_Choice = c("Softmax", "Softmax", "Softmax", "none") # "Softmax", "Softmax"
 )
 
 # subj_fits contains all participants and models to be fit
@@ -103,6 +114,8 @@ mle_grid_cluster_fun <- function(i) {
   # Impression parameter sequence
   if(grepl("RL", rule_Imp_i)) {pars_Imp_v <- alpha_par_v}  # RL impression uses alpha
   if(grepl("SampEx", rule_Imp_i)) {pars_Imp_v <- N_par_v}  # SampEx impression uses N
+  
+  if(grepl("Mean", rule_Imp_i)){pars_Imp_v <- NA} # No Impression parameter for the mean rule
     
   # Choice parameter sequence
   if(grepl("Softmax", rule_Choice_i)) {pars_Choice_v <- phi_par_v} # Sofmax uses phi
@@ -178,7 +191,7 @@ clusterExport(cl, list("subj_fits",
                        "N_par_v", "phi_par_v", "alpha_par_v",
                        "trial_max", "Goal", "dat", 
                        "Model_Lik", 
-                       "SampEx_Imp", "RL_Imp", 
+                       "SampEx_Imp", "RL_Imp", "Mean_Imp",
                        "get_samples", 
                        "Softmax_Choice", 
                        "p_getthere"))
@@ -222,21 +235,38 @@ model_best <- subj_fits %>%
     model_best_Choice = pars_Choice_mle[bic == min(bic)][1]
   )
 
-# Combine actual participant conditions with best model
 
-model_best <- dat %>%
-  group_by(id) %>%
-  summarise(
-    goal.condition = goal.condition[1],
-    condition = condition[1]
-  ) %>% 
-  ungroup() %>%
-  left_join(model_best)   # Add modelling results
+if (modelRecovery){
+  
+  model_best <- dat %>%
+    group_by(id) %>%
+    summarise(
+      true_Model = model[1],
+      true_Pars_Imp = pars_Imp[1],
+      true_Pars_Choice = pars_Choice[1]
+    ) %>% 
+    ungroup() %>%
+    left_join(model_best)   # Add modelling results
+  
+  prop.table(table(model_best$model_best))
+  mean(model_best$model_best == model_best$true_Model)
+  
+} else {
+  # Combine actual participant conditions with best model
 
-# Table of results
-table(model_best$model_best, model_best$goal.condition)
+  model_best <- dat %>%
+    group_by(id) %>%
+    summarise(
+      goal.condition = goal.condition[1],
+      condition = condition[1]
+    ) %>% 
+    ungroup() %>%
+    left_join(model_best)   # Add modelling results
 
+  # Table of results
+  table(model_best$model_best, model_best$goal.condition)
 
+}
 
 
 

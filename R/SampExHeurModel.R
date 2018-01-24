@@ -182,6 +182,28 @@ SampEx_Imp <- function(method_extrap = "heuristic",  # method_extrap: 'heuristic
 }
 
 
+# mean rule
+Mean_Imp <- function(selection_v,   # selection_v: Sequential selections made
+                     outcome_v,     # outcome_v: Sequential outcomes observed
+                     trial_max){    # trial_max: Maximum number of trials
+  
+  
+  
+  # get Recent Distribution, i.e. all sampled values so far
+  RD_A <- get_samples(outcome_v[selection_v == 1], trial_max)
+  RD_B <- get_samples(outcome_v[selection_v == 2], trial_max)
+  
+  
+  # Impressions are the means of the outcomes seen
+  impressions <- c(mean(RD_A), mean(RD_B))
+    
+  
+  # Return vector of impressions
+  return(impressions)
+  
+}
+
+
 # Reinforcement learning updating rule
 RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
                    selection_v,   # selection_v: Sequential selections made
@@ -319,6 +341,15 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
       
     }
     
+    if (rule_Imp %in% c("Mean")){
+      
+      # Get impressions
+      impressions_i <- Mean_Imp(selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                trial_max = trial_max)
+      
+    }
+    
     # Get choice probs
     
     if(rule_Choice == "Softmax") {
@@ -365,6 +396,10 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   # Calculate bic
   # BIC = -2 * ln(Lik) + K * log(N)
   #  Based on Lewandowsky & Farrell, Computational Modeling in Cognition, p 184, equation 5.13
+  
+  if (rule_Imp %in% c("Mean")){
+    pars_Imp <- NULL
+  }
   
   pars_total <- length(pars_Imp) + length(pars_Choice)
   
@@ -470,6 +505,15 @@ Model_Sim <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
                                 outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
                                 option_n = option_n)
         
+        
+      }
+      
+      if (rule_Imp %in% c("Mean")){
+        
+        # Get impressions
+        impressions_i <- Mean_Imp(selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                  outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                  trial_max = trial_max)
         
       }
       

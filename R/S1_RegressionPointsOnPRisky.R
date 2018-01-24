@@ -16,7 +16,9 @@ df_trial <- df_trial %>%
   mutate(game = game - 2,
          id.f = as.factor(id),
          goal.condition.f = as.factor(goal.condition),
-         overGoal.f = as.factor(overGoal))
+         overGoal.f = as.factor(overGoal),
+         goal.condition.bin = as.factor(case_when(goal.condition == "NoGoal" ~ 0,
+                                                  goal.condition == "Goal" ~ 1)))
 
 df_trialAgg <- df_trial %>%
   group_by(id, variance.condition, goal.condition, trial) %>%
@@ -189,8 +191,21 @@ ggplot(bin_df, aes(x = mean_bin, y = pRisky)) +
 # ----------------------
 
 # mixed effects model with random intercepts for subjects and games
-model <- glmer(high.var.chosen ~ goal.condition.f * overGoal.f + points.cum +
+model <- glmer(high.var.chosen ~ goal.condition.bin * overGoal.f + points.cum +
                  (1|id.f/game), data = df_trial, family = "binomial")
 
 summary(model)
 r2(model)
+
+
+# Now repeat the analysis but only with the last 10 trials
+
+# mixed effects model with random intercepts for subjects and games
+model_subs <- glmer(high.var.chosen ~ goal.condition.bin * overGoal.f + points.cum +
+                 (1|id.f/game), data = subset(df_trial, trial >= 15),
+               family = "binomial")
+
+summary(model_subs)
+r2(model_subs)
+
+
