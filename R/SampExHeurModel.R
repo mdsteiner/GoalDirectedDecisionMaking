@@ -55,8 +55,6 @@ p_getthere <- function(points_need,    # points_need: How many points do I need?
   
 }
 
-
-
 # ---------------------
 # Choice rules
 # ---------------------
@@ -112,7 +110,6 @@ SampEx_Imp <- function(method_extrap = "heuristic",  # method_extrap: 'heuristic
   
   # number of remaining trials
   trial_rem <- trial_max - trial_now
-  
   
   # get Recent Distribution
   RD_A <- get_samples(outcome_v[selection_v == 1], memory_N)
@@ -255,6 +252,112 @@ RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
   return(impressions)
   
 }
+
+
+# A version of a reinforcement learning rule that tries to take goals into account
+# IN PROGRESS
+RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
+                       selection_v,   # selection_v: Sequential selections made
+                       outcome_v,     # outcome_v: Sequential outcomes observed
+                       goal = NA,     # Goal
+                       curvature_par = 0.88,   # Curvature of value function
+                       lambda_par = 2.25, # Loss aversion
+                       option_n = NULL # option_n: Number of options
+){
+  
+  # 
+  # alpha_par = .3     # alpha_par: Updating rate [0, Inf]
+  # selection_v = c(1, 2, 2, 1, 1, 2, 1, 2, 2, 2, 1, 1)  # selection_v: Sequential selections made
+  # outcome_v = c(4, 2, -4, 6, 3, 5, 2, 5, -10, 2, -5, 15)     # outcome_v: Sequential outcomes observed
+  # goal = 10     # Goal
+  # curvature_par = 0.88   # Curvature of value function
+  # lambda_par = 2.25 # Loss aversion
+  # option_n = NULL
+  # 
+  # Get trials
+  trial_max <- length(selection_v)
+  
+  # Get number of options
+  if(is.null(option_n)) {option_n <- length(unique(selection_v))}
+  
+  # Get cumulative earnings
+  points_cum <- cumsum(outcome_v)
+  
+  # data_df stores main information
+  
+  data_df <- data.frame(trial = 1:trial_max,
+                        selection = selection_v,
+                        outcome = outcome_v)
+  
+  data_df <- data_df %>%
+    mutate(
+      points_cum = cumsum(outcome),
+      goal_dist = points_cum - goal
+    )
+  
+  # Create impression_df
+  
+  impression_df <- as.data.frame(matrix(NA, nrow = trial_max, ncol = option_n))
+  names(impression_df) <- paste0("imp_", 1:option_n)
+  
+  data_df <- cbind(data_df, impression_df)
+  
+  # Loop over trials
+  
+  for(trial_i in 1:trial_max) {
+    
+    # Get prior impression of all options
+    if(trial_i == 1) {imp_prior <- rep(0, option_n)}
+    if(trial_i > 1) {imp_prior <- data_df[trial_i - 1, paste0("imp_", 1:option_n)]}
+    
+    # Calculate new impression for each option
+    imp_new <- rep(NA, option_n)
+    
+    for(option_i in 1:option_n) {
+      
+      # If option is not selected, set new impression to old one
+      if(data_df$selection[trial_i] != option_i) {
+        
+        imp_new[option_i] <- imp_prior[option_i]
+        
+      }
+      
+      # If option is selected...
+      
+      if(data_df$selection[trial_i] == option_i) {
+        
+        points_needed <- ifelse(trial_i == 1, goal, goal - data_df$points_cum[trial_i - 1])
+        
+        # Reference point is outcome minus points needed divided by trials remaining
+        points_ref <- data_df$outcome[trial_i] - points_needed / (trial_max - trial_i + 1)
+        
+        # Transform points_ref via value function
+        if(points_ref > 0) {
+          
+          points_ref <- points_ref ^ curvature_par} else {
+            
+            points_ref <- -lambda_par * ((-points_ref) ^ curvature_par)}
+        
+        # new information is 
+        imp_new[option_i] <- imp_prior[option_i] + alpha_par * points_ref
+        
+        
+        }
+    
+    }
+    
+    data_df[trial_i, paste0("imp_", 1:option_n)] <- imp_new
+    
+
+  }
+  
+  impression_x <- data_df[trial_max, paste0("imp_", 1:option_n)]
+  
+    return(impression_x)
+    
+}
+  
+
 
 # ---------------------
 # Model Likelihood
