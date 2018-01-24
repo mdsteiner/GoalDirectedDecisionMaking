@@ -385,6 +385,130 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
           
 
 
+# ---------------------
+# Model Simulation
+# ---------------------
+
+# Model_Sim
+# Given a set of N and phi parameters, simulates choice data
+
+Model_Sim <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choice]
+                      rule_Imp,         # rule_Imp: Impression rule [SampEx_Heur_Imp, SampEx_Int_Imp, RL_Imp]
+                      pars_Choice,      # pars_Choice: Choice parameters
+                      pars_Imp,         # pars_Imp: Impression parameters
+                      selection_v,      # selection_v: Selection vector
+                      outcome_v,        # outcome_v: Outcome vector
+                      trial_v,          # trial_v: Vector of trial numbers
+                      game_v,           # game_v: Vector of game numbers
+                      trial_max = NULL, # trial_max: Maximum number of trials in task
+                      points_goal,      # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
+                      option_n = NULL,  # option_n: Number of options
+                      game_n = NULL,    # game_n: Number of games
+                      outcome_mat       # Matrix containing the possible outcomes
+){ 
+  
+  # Fix missing values
+  
+  if(is.null(option_n)) {option_n <- max(selection_v)}
+  if(is.null(game_n)) {game_n <- max(game_v)}
+  if(is.null(trial_max)) {trial_max <- max(trial_v)}
+  
+  # Extract some information
+  observations_n <- length(selection_v)
+  
+  # Placeholder for selection probabilities for all options
+  sim_mtx <- data.frame(trial = trial_v,
+                        game = game_v,
+                        pred = NA,
+                        outcome = NA)
+  
+  
+  # Loop over games
+  for(game_i in 1:game_n) {
+    
+    # Look over trials
+    for (trial_i in 1:trial_max) {
+      
+      # if(trial_i == 1) {
+      #   selection_v[is.na(selection_v)][1] <- sample(1:option_n, 1)
+      #   }
+      
+      # Get impressions
+      
+      if(grepl("SampEx", rule_Imp)) {
+        
+        # Get points_now
+        points_now <- sum(outcome_v[game_v == game_i & trial_v < trial_i])
+        
+        # Get memory_N and phi parameter values
+        memory_N <- pars_Imp[1]
+        
+        if(grepl("Heur", rule_Imp)) {method_extrap <- "heuristic"}
+        if(grepl("Int", rule_Imp)) {method_extrap <- "integration"}
+        
+        # Get impressions
+        impressions_i <- SampEx_Imp(method_extrap = method_extrap,
+                                    memory_N = memory_N, 
+                                    selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                    outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                    trial_max = trial_max,
+                                    trial_now = trial_i,
+                                    points_goal = points_goal,
+                                    points_now = points_now)
+        
+        
+      }
+      
+      if(rule_Imp %in% c("RL")) {
+        
+        # Get memory_N and phi parameter values
+        alpha_par <- pars_Imp[1]
+        
+        # Get impressions
+        impressions_i <- RL_Imp(alpha_par = alpha_par,
+                                selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                option_n = option_n)
+        
+        
+      }
+      
+      # Get choice probs
+      
+      if(rule_Choice == "Softmax") {
+        
+        phi_par <- pars_Choice[1]
+        
+        # Get selection probabilities
+        selprob_v <- Softmax_Choice(impressions = impressions_i, 
+                                    phi = phi_par, 
+                                    trial_now = trial_i)
+        
+        
+      }
+      
+      # Assign absolute prediction to lik_mtx
+      pred_abs <- sample(1:option_n, size = 1, prob = selprob_v)
+      if(length(pred_abs) > 1) {pred_abs <- sample(pred_abs, size = 1)}
+      sim_mtx$pred[sim_mtx$game == game_i & sim_mtx$trial == trial_i] <- pred_abs
+      
+      if(any(is.na(selection_v))) {selection_v[is.na(selection_v)][1] <- pred_abs}
+      
+      sample_outc <- outcome_mat[(game_i - 1) * trial_max + trial_i, pred_abs]
+      if(any(is.na(outcome_v))) {outcome_v[is.na(outcome_v)][1] <- sample_outc}
+      sim_mtx$outcome[sim_mtx$game == game_i & sim_mtx$trial == trial_i] <- sample_outc
+      
+    }
+    
+  }
+  
+  # Define final output
+  
+  return(sim_mtx)
+  
+}
+
+
 
 
 

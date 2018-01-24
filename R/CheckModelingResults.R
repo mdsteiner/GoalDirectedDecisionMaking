@@ -1,3 +1,5 @@
+rm(list = ls())
+gc()
 # get modeling results
 library(tidyverse)
 
@@ -7,8 +9,7 @@ df.participant <- readRDS("data/Study1Data/useData/S1_dataParticipantLevel.rds")
 
 
 subj_fits <- subj_fits %>%
-  mutate(g2 = case_when(model == "SampEx_Int_Goal" ~ g2 - log(250),
-                        model != "Random" ~ g2 - 2 * log(250),
+  mutate(g2 = case_when(model != "Random" ~ g2 - 2 * log(250),
                         TRUE ~ g2))
 # Get the best model for each subject
 model_best <- subj_fits %>%
@@ -35,18 +36,27 @@ model_best <- dat %>%
 model_best <- model_best %>%
   left_join(df.participant[c("id", "variance.condition")], by = "id")
 
+
+# Table of results
+table(model_best$model_best, model_best$goal.condition)
+prop.table(table(model_best$model_best, model_best$goal.condition), 2)
+
 # Table of results
 var_cond <- unique(model_best$variance.condition)
+
 
 for (i in var_cond){
   print(i)
   print(
-    prop.table(table(model_best$model_best[model_best$variance.condition == i],
-                     model_best$goal.condition[model_best$variance.condition == i]), 2)
+    round(
+      prop.table(table(model_best$model_best[model_best$variance.condition == i],
+                     model_best$goal.condition[model_best$variance.condition == i]), 2),
+      3)
   )
 }
 
 
 mean(model_best$model_best_Imp[model_best$model_best == "SampEx_Heur_Goal"])
 mean(model_best$model_best_Imp[model_best$model_best == "SampEx_Heur_NoGoal"])
+mean(model_best$model_best_Imp[model_best$model_best == "SampEx_Int_Goal"])
 
