@@ -1,3 +1,6 @@
+rm(list = ls())
+gc()
+
 ### Regression of points on p risky
 
 library(tidyverse)
@@ -6,6 +9,7 @@ library(sjstats)
 
 df_trial <- readRDS("data/Study1Data/useData/S1_dataTrialLevel.rds")
 
+
 # get rid of practice trial and factorize data for use in regression model
 df_trial <- df_trial %>%
   filter(game > 1) %>%
@@ -13,6 +17,10 @@ df_trial <- df_trial %>%
          id.f = as.factor(id),
          goal.condition.f = as.factor(goal.condition),
          overGoal.f = as.factor(overGoal))
+
+df_trialAgg <- df_trial %>%
+  group_by(id, variance.condition, goal.condition, trial) %>%
+  summarise(risky_rate = mean(high.var.chosen))
 
 # ----------------------
 # Plot data
@@ -33,7 +41,28 @@ ggplot(df_trial, aes(x = points.cum, y = high.var.chosen)) +
               aes(), method = "loess", formula = y ~ x, se = FALSE, lwd = 2,
               col = "grey") +
   ylim(0,1)
-  
+
+
+# Create plot of pRisky over Trials
+cols <- c("Goal" = "red", "NoGoal" = "blue")
+ggplot(df_trialAgg, aes(x = trial, y = risky_rate)) + 
+  geom_line(data = filter(df_trialAgg, goal.condition == "Goal"),
+              aes(group=id), col = "blue", lwd = .3, alpha = 0.1) +
+  geom_line(data = filter(df_trialAgg, goal.condition == "NoGoal"),
+              aes(group=id), col = "red", lwd = .3, alpha = 0.1) +
+  stat_smooth(data = filter(df_trialAgg, goal.condition == "Goal"),
+              aes(col = "Goal"),method ="loess", lwd = 1.5) +
+  stat_smooth(data = filter(df_trialAgg, goal.condition == "NoGoal"),
+              aes(col = "NoGoal"), method = "loess",  lwd = 1.5) +
+  scale_colour_manual(name="Goal Conditions",values=cols) +
+  ylim(0,1) +
+  ylab("Likelihood Risky") + xlab("Trials") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 15, vjust=-.2)) +
+  theme(axis.title.y = element_text(size = 15, vjust=0.3)) +
+  facet_wrap(~ variance.condition)
+
+
 
 # Now make bins of data to get probability values
 get_bins <- function(id, goal_cond, var_cond, point_vec, high_var_vec, nbins){
@@ -117,7 +146,7 @@ for (sub in 2:length(unique(df_trial$id))){
   
 }
 
-# plot the bin- and mean lines
+# plot the bin- and mean lines over all variance conditions
 cols <- c("Goal" = "red", "NoGoal" = "blue")
 ggplot(bin_df, aes(x = mean_bin, y = pRisky)) + 
   geom_line(data = filter(bin_df, goal.condition == "Goal"),
@@ -125,9 +154,9 @@ ggplot(bin_df, aes(x = mean_bin, y = pRisky)) +
   geom_line(data = filter(bin_df, goal.condition == "NoGoal"),
             aes(group=id), col = "red", lwd = .3, alpha = 0.1) +
   stat_smooth(data = filter(bin_df, goal.condition == "Goal"),
-              aes(col = "Goal"), method ="loess", se = FALSE, lwd = 1.5) +
+              aes(col = "Goal"), method ="loess", lwd = 1.5) +
   stat_smooth(data = filter(bin_df, goal.condition == "NoGoal"),
-              aes(col = "NoGoal"), method = "loess", se = FALSE, lwd = 1.5) +
+              aes(col = "NoGoal"), method = "loess", lwd = 1.5) +
   scale_colour_manual(name="Goal Conditions",values=cols) +
   ylim(0,1) +
   ylab("Likelihood Risky") + xlab("Points") +
@@ -135,7 +164,25 @@ ggplot(bin_df, aes(x = mean_bin, y = pRisky)) +
   theme(axis.title.x = element_text(size = 15, vjust=-.2)) +
   theme(axis.title.y = element_text(size = 15, vjust=0.3))
 
-  
+
+# separate for environments
+cols <- c("Goal" = "red", "NoGoal" = "blue")
+ggplot(bin_df, aes(x = mean_bin, y = pRisky)) + 
+  geom_line(data = filter(bin_df, goal.condition == "Goal"),
+            aes(group=id), col = "blue", lwd = .3, alpha = 0.1) +
+  geom_line(data = filter(bin_df, goal.condition == "NoGoal"),
+            aes(group=id), col = "red", lwd = .3, alpha = 0.1) +
+  stat_smooth(data = filter(bin_df, goal.condition == "Goal"),
+              aes(col = "Goal"), method ="loess", lwd = 1.5) +
+  stat_smooth(data = filter(bin_df, goal.condition == "NoGoal"),
+              aes(col = "NoGoal"), method = "loess", lwd = 1.5) +
+  scale_colour_manual(name="Goal Conditions",values=cols) +
+  ylim(0,1) +
+  ylab("Likelihood Risky") + xlab("Points") +
+  facet_wrap(~ variance.condition) +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 15, vjust=-.2)) +
+  theme(axis.title.y = element_text(size = 15, vjust=0.3))
 
 # ----------------------
 # Run Regression Model
