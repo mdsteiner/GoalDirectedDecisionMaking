@@ -3,6 +3,7 @@ library(tidyverse)
 
 
 load("data/Study1Data/useData/model_comparison01.RData")
+df.participant <- readRDS("data/Study1Data/useData/S1_dataParticipantLevel.rds")
 
 
 subj_fits <- subj_fits %>%
@@ -31,11 +32,21 @@ model_best <- dat %>%
   ungroup() %>%
   left_join(model_best)   # Add modelling results
 
+model_best <- model_best %>%
+  left_join(df.participant[c("id", "variance.condition")], by = "id")
+
 # Table of results
-table(model_best$model_best, model_best$goal.condition)
+var_cond <- unique(model_best$variance.condition)
 
-
+for (i in var_cond){
+  print(i)
+  print(
+    prop.table(table(model_best$model_best[model_best$variance.condition == i],
+                     model_best$goal.condition[model_best$variance.condition == i]), 2)
+  )
+}
 
 
 mean(model_best$model_best_Imp[model_best$model_best == "SampEx_Heur_Goal"])
 mean(model_best$model_best_Imp[model_best$model_best == "SampEx_Heur_NoGoal"])
+

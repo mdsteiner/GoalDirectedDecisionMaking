@@ -14,7 +14,8 @@ dat <- tibble(
   subj = rep(1:subjects, each = trials * games), # 20 people per model
   game = games, # 10 games
   trial = rep(rep(1:trials, games), subjects), # 25 trials per game
-  model = rep(c("SampEx_Heur_Goal", "SampEx_Heur_NoGoal", "SampEx_Int_Goal", "RL", "Random"),
+  model = rep(c("SampEx_Heur_Goal", "SampEx_Heur_NoGoal",
+                "SampEx_Int_Goal", "RL", "Random"),
             each = subjects / 5 * games * trials),
   goal = rep(c(100, Inf, 100, Inf, Inf), each = subjects / 5 * games * trials),
   rule_Imp = rep(c("SampExHeur", "SampExHeur", "SampExInt", "RL", "none"),
