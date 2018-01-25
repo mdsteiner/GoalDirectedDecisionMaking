@@ -1,4 +1,3 @@
-
 # ---------------------
 # Helper functions
 # ---------------------
@@ -32,7 +31,7 @@ get_samples <- function(samp,        # samp: History of observations
 }
 
 
-# What is the probability I will reach the goal?
+# What is the probability that I will reach the goal?
 p_getthere <- function(points_need,    # points_need: How many points do I need?
                        trial_rem,      # trial_rem: Trials remaining
                        mu,             # mu: Mean of distribution(s)
@@ -65,9 +64,14 @@ p_getthere <- function(points_need,    # points_need: How many points do I need?
 
 Softmax_Choice <- function(impressions,       # impressions: Vector (or list) of impressions of options
                            phi,               # phi: Choice sensitivity
-                           trial_now,             # trial_now: Current trial
+                           trial_now,         # trial_now: Current trial
                            version = "log") { # version: Either 'yb' for Yechiam Busemeyer, or 'log' for log version     
   
+  # impressions <- c(-4, 10)
+  # phi <- .05
+  # trial_now <- 5
+  # version <- "yb"
+  # 
   # Cleanup inputs
   if(class(impressions) == "list") {impressions <- unlist(impressions)}
   
@@ -89,7 +93,6 @@ Softmax_Choice <- function(impressions,       # impressions: Vector (or list) of
   return(p_select)
   
 }
-
 
 # ---------------------
 # Impression rules
@@ -202,7 +205,7 @@ Mean_Imp <- function(selection_v,   # selection_v: Sequential selections made
 
 
 # Reinforcement learning updating rule
-RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
+RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, 1]
                    selection_v,   # selection_v: Sequential selections made
                    outcome_v,     # outcome_v: Sequential outcomes observed
                    option_n = NULL # option_n: Number of options
@@ -234,11 +237,8 @@ RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
       # Recursively update with new information
       for(i in 2:length(prior_outcomes_x)) {
         
-        # Weight on new information is (1 / outcomes) & alpha_par
-        weight_new <- 1 / i ^ alpha_par
-        
         # Update impression
-        impression_x <- (1 - weight_new) * impression_x + weight_new * prior_outcomes_x[i]
+        impression_x <- (1 - alpha_par) * impression_x + alpha_par * prior_outcomes_x[i]
         
       }
       
@@ -256,6 +256,9 @@ RL_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
 
 # A version of a reinforcement learning rule that tries to take goals into account
 # IN PROGRESS
+# Notes 
+#  - The code is pretty inefficient as it returns only the final impression
+
 RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
                        selection_v,   # selection_v: Sequential selections made
                        outcome_v,     # outcome_v: Sequential outcomes observed
@@ -286,7 +289,6 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
   # Get cumulative earnings
   points_cum <- cumsum(outcome_v)
   
-  
   # data_df stores main information
   data_df <- data.frame(trial = 1:trial_max,
                         selection = selection_v,
@@ -295,7 +297,7 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
   data_df <- data_df %>%
     mutate(
       points_cum = cumsum(outcome),
-      goal_dist = points_cum - goal
+      goal_dist = goal - points_cum
     )
   
   # Create impression_df
@@ -329,9 +331,13 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
       
       if(data_df$selection[trial_i] == option_i) {
         
+        # How many points are needed?
         points_needed <- ifelse(trial_i == 1, goal, goal - data_df$points_cum[trial_i - 1])
         
         # Reference point is outcome minus points needed divided by trials remaining
+        #  In other words, how different is this outcome from the average outcome I need
+        #   for the rest of the task to reach the goal?
+        
         points_ref <- data_df$outcome[trial_i] - points_needed / (trial_max - trial_i + 1)
         
         # Transform points_ref via value function
@@ -341,24 +347,20 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
             
             points_ref <- -lambda_par * ((-points_ref) ^ curvature_par)}
         
-        weight_new <- 1 / trial_i ^ alpha_par
-        
-        # new information is 
-        imp_new[option_i] <- (1 - weight_new) * imp_prior[option_i] + weight_new * points_ref
-        
+        # Update impression
+        imp_new[option_i] <- (1 - alpha_par) * imp_prior[option_i] + alpha_par * points_ref
         
         }
-    
     }
     
     data_df[trial_i, paste0("imp_", 1:option_n)] <- imp_new
-    
 
   }
   
-  impression_x <- data_df[trial_max, paste0("imp_", 1:option_n)]
+  # Get final impression
+  impression_final <- data_df[trial_max, paste0("imp_", 1:option_n)]
   
-    return(impression_x)
+  return(impression_final)
     
 }
   
