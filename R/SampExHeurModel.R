@@ -280,11 +280,14 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
   # Get number of options
   if(is.null(option_n)) {option_n <- length(unique(selection_v))}
   
+  # If there are no outcomes, set to 0
+  if(trial_max == 0) {return(rep(0, option_n))}
+  
   # Get cumulative earnings
   points_cum <- cumsum(outcome_v)
   
-  # data_df stores main information
   
+  # data_df stores main information
   data_df <- data.frame(trial = 1:trial_max,
                         selection = selection_v,
                         outcome = outcome_v)
@@ -338,8 +341,10 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
             
             points_ref <- -lambda_par * ((-points_ref) ^ curvature_par)}
         
+        weight_new <- 1 / trial_i ^ alpha_par
+        
         # new information is 
-        imp_new[option_i] <- imp_prior[option_i] + alpha_par * points_ref
+        imp_new[option_i] <- (1 - weight_new) * imp_prior[option_i] + weight_new * points_ref
         
         
         }
@@ -441,6 +446,24 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
                               selection_v = selection_v[game_v == game_i & trial_v < trial_i],
                               outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
                               option_n = option_n)
+      
+    }
+    
+    if(rule_Imp %in% c("RLGoal")){
+      
+      # Get memory_N and phi parameter values
+      alpha_par <- pars_Imp[1]
+      curvature_par <- pars_Imp[2]
+      lambda_par <- pars_Imp[3]
+      
+      # Get impressions
+      impressions_i <- RLGoal_Imp(alpha_par = alpha_par,
+                                  selection_v = selection_v[game_v == game_i & trial_v < trial_i], 
+                                  outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                  goal = points_goal,
+                                  curvature_par = curvature_par,
+                                  lambda_par = lambda_par,
+                                  option_n = option_n)
       
     }
     
@@ -608,6 +631,25 @@ Model_Sim <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
                                 outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
                                 option_n = option_n)
         
+        
+      }
+      
+      
+      if(rule_Imp %in% c("RLGoal")){
+        
+        # Get memory_N and phi parameter values
+        alpha_par <- pars_Imp[1]
+        curvature_par <- pars_Imp[2]
+        lambda_par <- pars_Imp[3]
+        
+        # Get impressions
+        impressions_i <- RLGoal_Imp(alpha_par = alpha_par,
+                                   selection_v = selection_v[game_v == game_i & trial_v < trial_i], 
+                                   outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                   goal = points_goal,
+                                   curvature_par = curvature_par,
+                                   lambda_par = lambda_par,
+                                   option_n = option_n)
         
       }
       

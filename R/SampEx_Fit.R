@@ -52,9 +52,11 @@ Goal <- 100
 # Grid search parameters
 #   The grid search will look over all combinations of these parameters
 
-N_par_v <- 1:20                  # N paramter for SampEx Impression
-alpha_par_v <- seq(0, 8, .1)     # Alpha parameter for reinforcement learning Impression
-phi_par_v <- seq(0.0, 8, .1)  # Phi parameter for softmax choice
+N_par_v <- 1:20                     # N paramter for SampEx Impression
+alpha_par_v <- seq(0, 8, .1)        # Alpha parameter for reinforcement learning Impression
+phi_par_v <- seq(0.0, 8, .1)        # Phi parameter for softmax choice
+curvature_par_v <- seq(0.1, 2, 0.1) # curvature parameter utility function RLGoal Impression
+lambda_par_v <- seq(0.1, 3, 0.1)    # loss aversion parameter utility function RLGoal Impression
 
 # Vector of all models to fit to each participant
 models_to_fit <- c(#"SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
@@ -62,14 +64,15 @@ models_to_fit <- c(#"SampEx_Heur_Goal",    # Sample extrapolation with Heuristic
                    "NaturalMean",         # Natural Mean Model
                    "SampEx_Int_Goal",     # Sample extrapolation with Integration and Goal
                    "RL",                  # Reinforcement learning
+                   "RLGoal",              # Reinforcement learning target/ goal model
                    "Random")              # Random choice
 
 # model_lu: Shows the impression and choice rules for each model
 model_lu <- tibble(
-  model = c("NaturalMean", "SampEx_Int_Goal", "RL", "Random"), # "SampEx_Heur_Goal", "SampEx_Heur_NoGoal"
-  goal = c(Inf, 100, Inf, Inf), # 100, Inf
-  rule_Imp = c("Mean", "SampExInt", "RL", "none"), #"SampExHeur", "SampExHeur"
-  rule_Choice = c("Softmax", "Softmax", "Softmax", "none") # "Softmax", "Softmax"
+  model = c("NaturalMean", "SampEx_Int_Goal", "RL", "RLGoal", "Random"), # "SampEx_Heur_Goal", "SampEx_Heur_NoGoal"
+  goal = c(Inf, 100, Inf, 100, Inf), # 100, Inf
+  rule_Imp = c("Mean", "SampExInt", "RL", "RLGoal", "none"), #"SampExHeur", "SampExHeur"
+  rule_Choice = c("Softmax", "Softmax", "Softmax", "Softmax", "none") # "Softmax", "Softmax"
 )
 
 # subj_fits contains all participants and models to be fit
@@ -109,10 +112,13 @@ mle_grid_cluster_fun <- function(i) {
   
   if(model_i != "Random") {
   
+  if(!grepl("RLGoal", rule_Imp_i)){- # If the Model is not RLGoal it only needs one Impression parameter
+      
   # Get impression and choice parameter combinations based on models
-    
+  
   # Impression parameter sequence
   if(grepl("RL", rule_Imp_i)) {pars_Imp_v <- alpha_par_v}  # RL impression uses alpha
+
   if(grepl("SampEx", rule_Imp_i)) {pars_Imp_v <- N_par_v}  # SampEx impression uses N
   
   if(grepl("Mean", rule_Imp_i)){pars_Imp_v <- NA} # No Impression parameter for the mean rule
@@ -122,7 +128,9 @@ mle_grid_cluster_fun <- function(i) {
     
   # Set up grid search for all combinations of parameters
   par_grid <- expand.grid(pars_Imp = pars_Imp_v,
-                          pars_Choice = pars_Choice_v)
+                          pars_Choice = pars_Choice_v,
+                          pars_Imp_curvature = NA,
+                          pars_Imp_lambda = NA)
   
   # Loop over par_grid
   for(par_i in 1:nrow(par_grid)) {
@@ -150,6 +158,55 @@ mle_grid_cluster_fun <- function(i) {
     
   }
   
+  } else if(grepl("RLGoal", rule_Imp_i)){ # If the model is RLGoal it needs three Impression parameters
+    
+    # Get impression and choice parameter combinations based on models
+    
+    # Impression parameter sequence
+    pars_Imp_v_alpha <- alpha_par_v  # RL impression uses alpha
+    pars_Imp_v_curvature <- curvature_par_v  # RL impression uses alpha
+    pars_Imp_v_lambda <- lambda_par_v  # RL impression uses alpha
+    
+    
+    # Choice parameter sequence
+    if(grepl("Softmax", rule_Choice_i)) {pars_Choice_v <- phi_par_v} # Sofmax uses phi
+    
+    # Set up grid search for all combinations of parameters
+    par_grid <- expand.grid(pars_Imp = pars_Imp_v_alpha,
+                            pars_Imp_curvature = pars_Imp_v_curvature,
+                            pars_Imp_lambda = pars_Imp_v_lambda,
+                            pars_Choice = pars_Choice_v)
+    
+    # Loop over par_grid
+    for(par_i in 1:nrow(par_grid)) {
+      
+      # Get parameters for current run
+      pars_Imp_i <- c(par_grid$pars_Imp_alpha[par_i],
+                      par_grid$pars_Imp_curvature[par_i],
+                      par_grid$pars_Imp_lambda[par_i])
+      pars_Choice_i <- par_grid$pars_Choice[par_i]
+      
+      fits_i <- Model_Lik(rule_Choice = rule_Choice_i,      # Choice rule
+                          rule_Imp = rule_Imp_i,            # Impression rule
+                          pars_Choice = pars_Choice_i,      # Choice parameter(s)
+                          pars_Imp = pars_Imp_i,            # Impression parameter(s)
+                          selection_v = dat_subj$selection, # Selection vector
+                          outcome_v = dat_subj$outcome,     # Outcome vector
+                          trial_v = dat_subj$trial,         # trial_v: Vector of trial numbers
+                          game_v = dat_subj$game,           # game_v: Vector of game numbers
+                          trial_max = 25,                   # trial_max: Maximum number of trials in task
+                          points_goal = points_goal_i,      # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
+                          option_n = 2,                     # option_n: Number of options
+                          game_n = 10)                      # Number of games
+      
+      # Assign bic to par_grid
+      par_grid$dev[par_i] <- fits_i$deviance
+      par_grid$bic[par_i] <- fits_i$bic
+      
+    }
+    
+  }
+  
   # Get minimum bic value and parameters
   
   par_grid_min <- par_grid %>% 
@@ -163,7 +220,9 @@ mle_grid_cluster_fun <- function(i) {
     # Set bic for a random model (and NA paramter values)
     par_grid_min <- data.frame(bic = -2 * sum(log(rep(.5, 25 * 10))),
                               pars_Imp = NA,
-                              pars_Choice = NA)
+                              pars_Choice = NA,
+                              pars_Imp_curvature = NA,
+                              pars_Imp_lambda = NA)
   }
   
   # Return best values
@@ -171,6 +230,8 @@ mle_grid_cluster_fun <- function(i) {
            model = model_i, 
            bic = round(par_grid_min$bic, 3),
            pars_Imp_mle = par_grid_min$pars_Imp,
+           pars_Imp_curvature_mle = par_grid_min$pars_Imp_curvature,
+           pars_Imp_lambda_mle = par_grid_min$pars_Imp_lambda,
            pars_Choice_mle = par_grid_min$pars_Choice))
   
 }
@@ -191,7 +252,7 @@ clusterExport(cl, list("subj_fits",
                        "N_par_v", "phi_par_v", "alpha_par_v",
                        "trial_max", "Goal", "dat", 
                        "Model_Lik", 
-                       "SampEx_Imp", "RL_Imp", "Mean_Imp",
+                       "SampEx_Imp", "RL_Imp", "RLGoal_Imp", "Mean_Imp",
                        "get_samples", 
                        "Softmax_Choice", 
                        "p_getthere"))
@@ -216,6 +277,8 @@ cluster_result_df <- cluster_result_df %>%
   mutate(
     bic = as.numeric(bic),
     pars_Imp_mle = as.numeric(pars_Imp_mle),
+    pars_Imp_curvature_mle = as.numeric(pars_Imp_curvature_mle),
+    pars_Imp_lambda_mle = as.numeric(pars_Imp_lambda_mle),
     pars_Choice_mle = as.numeric(pars_Choice_mle)
   )
 
@@ -232,6 +295,8 @@ model_best <- subj_fits %>%
     model_best = model[bic == min(bic)][1],
     model_best_bic = bic[bic == min(bic)][1],
     model_best_Imp = pars_Imp_mle[bic == min(bic)][1],
+    model_best_Imp_curvature = pars_Imp_curvature_mle[bic == min(bic)][1],
+    model_best_Imp_lambda = pars_Imp_lambda_mle[bic == min(bic)][1],
     model_best_Choice = pars_Choice_mle[bic == min(bic)][1]
   )
 
@@ -243,6 +308,8 @@ if (modelRecovery){
     summarise(
       true_Model = model[1],
       true_Pars_Imp = pars_Imp[1],
+      true_Pars_Imp_curvature = pars_Imp_curvature[1],
+      true_Pars_Imp_lambda = pars_Imp_lambda[1],
       true_Pars_Choice = pars_Choice[1]
     ) %>% 
     ungroup() %>%

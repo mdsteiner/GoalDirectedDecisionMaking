@@ -13,6 +13,7 @@ source("r/SampExHeurModel.R")
 subjects <- 400
 games <- 10
 trials <- 25
+varCond <- "Equal"
 
 # Note: Table of means and sds as used in the study
 
@@ -23,27 +24,38 @@ trials <- 25
 # Low       4     2.5   2.5     11
 #
 
-# Simulate High environment
+# Vectors with environment information
 
-varCond <- "Equal"
-m_A <- 4
-sd_A <- 2.5
+Envs <- c("Equal", "High", "Low")
+m_A_envs <- c(4, 2.5, 4)
+sd_A_envs <- rep(2.5, 3)
+m_B_envs <- c(4, 4, 2.5)
+sd_B_envs <- rep(11, 3)
 
-m_B <- 4
-sd_B <- 11
 
-N_par_v <- 5:15                  # N paramter for SampEx Impression
-alpha_par_v <- seq(0.1, 6, .1)     # Alpha parameter for reinforcement learning Impression
-phi_par_v <- seq(0.1, 5, .05)  # Phi parameter for softmax choice
+ind <- Envs == varCond
+m_A <- m_A_envs[ind]
+sd_A <- sd_A_envs[ind]
+
+m_B <- m_B_envs[ind]
+sd_B <- sd_B_envs[ind]
+
+N_par_v <- 5:15                       # N paramter for SampEx Impression
+alpha_par_v <- seq(0.2, 1, .01)        # Alpha parameter for reinforcement learning Impression
+phi_par_v <- seq(0.1, 3, .05)         # Phi parameter for softmax choice
+curvature_par_v <- seq(0.3, 1.2, 0.1) # curvature parameter utility function RLGoal Impression
+lambda_par_v <- seq(0.6, 2.5, 0.1)      # loss aversion parameter utility function RLGoal Impression
 
 models_to_fit <- c(#"SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
   #"SampEx_Heur_NoGoal",  # Sample extrapolation with Heuristic and NoGoal
   "NaturalMean",         # Natural Mean Model
   "SampEx_Int_Goal",     # Sample extrapolation with Integration and Goal
   "RL",                  # Reinforcement learning
+  "RLGoal",              # Reinforcement learning target model (takes a goal into account)
   "Random")              # Random choice
 
 n_models <- length(models_to_fit)
+
 
 # create id variable
 ids <- NULL
@@ -60,18 +72,25 @@ dat <- tibble(
   trial = rep(rep(1:trials, games), subjects), # 25 trials per game
   model = rep(models_to_fit,
             each = subjects / n_models * games * trials),
-  goal = rep(c(Inf, 100, Inf, Inf), each = subjects / n_models * games * trials),
-  rule_Imp = rep(c("Mean", "SampExInt", "RL", "none"),
+  goal = rep(c(Inf, 100, Inf, 100, Inf), each = subjects / n_models * games * trials),
+  rule_Imp = rep(c("Mean", "SampExInt", "RL", "RLGoal", "none"),
                  each = subjects / n_models * games * trials),
-  rule_Choice = rep(c( "Softmax", "Softmax", "Softmax", "none"),
+  rule_Choice = rep(c( "Softmax", "Softmax", "Softmax", "Softmax", "none"),
                     each = subjects / n_models * games * trials),
   outc_A = round(rnorm(trials * games * subjects, m_A, sd_A )),
   outc_B = round(rnorm(trials * games * subjects, m_B, sd_B )),
-  pars_Imp = rep(c(rep(NA, subjects / n_models),                                    # Mean Model
-                   sample(N_par_v, size = subjects / n_models, replace = TRUE),     # SampExInt Model
-                   sample(alpha_par_v, size = subjects / n_models, replace = TRUE), # RL Model
-                   rep(NA, subjects / n_models)), each = games * trials),           # Random Model
-  pars_Choice = rep(c(sample(phi_par_v, size = subjects / n_models * 3, replace = TRUE),
+  pars_Imp = rep(c(rep(NA, subjects / n_models),                                  # Mean Model
+                   sample(N_par_v, size = subjects / n_models, replace = TRUE),   # SampExInt Model
+                   sample(alpha_par_v, size = subjects / n_models * 2,
+                          replace = TRUE),                                        # RL and RLGoal Model
+                   rep(NA, subjects / n_models)), each = games * trials),         # Random Model
+  pars_Imp_curvature = rep(c(rep(NA, subjects / n_models * 3),
+                             sample(curvature_par_v, size = subjects / n_models, replace = TRUE),
+                             rep(NA, subjects / n_models)), each = games * trials),
+  pars_Imp_lambda = rep(c(rep(NA, subjects / n_models * 3),
+                          sample(lambda_par_v, size = subjects / n_models, replace = TRUE),
+                          rep(NA, subjects / n_models)), each = games * trials),
+  pars_Choice = rep(c(sample(phi_par_v, size = subjects / n_models * 4, replace = TRUE),
                   rep(NA, subjects / n_models)), each = games * trials),
   selection = NA,
   outcome = NA,
@@ -102,7 +121,8 @@ for (i in seq_len(subjects)){
   rule_Choice_i <- dat_subj$rule_Choice[1]
   
   # Impression parameter
-  pars_Imp_i <- dat_subj$pars_Imp[1]
+  pars_Imp_i <- c(dat_subj$pars_Imp[1], dat_subj$pars_Imp_curvature[1],
+                  dat_subj$pars_Imp_lambda[1])
   
   # Choice Rule Parameter
   pars_Choice_i <- dat_subj$pars_Choice[1]
@@ -151,7 +171,8 @@ for (i in seq_len(subjects)){
 
 dat <- dat %>%
   group_by(id, game, trial, model, goal, rule_Imp, rule_Choice, outc_A, outc_B,
-           pars_Imp, pars_Choice, variance_condition) %>%
+           pars_Imp, pars_Imp_curvature, pars_Imp_lambda, pars_Choice,
+           variance_condition) %>%
   summarise(high.var.chosen = selection - 1,
             points.cum = cumsum(outcome),
             selection = selection,
