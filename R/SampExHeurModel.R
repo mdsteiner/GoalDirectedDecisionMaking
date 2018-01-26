@@ -552,6 +552,171 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
   return(output)
   
 }
+
+
+
+# Model_lik_optim for optim function
+# Given a set of N and phi parameters, calculates the
+#  likelihood of data
+
+Model_Lik_Optim <- function(Q,                # Vector of parameters
+                            rule_Choice,      # rule_Choice: Choice rule [Softmax_Choice]
+                            rule_Imp,         # rule_Imp: Impression rule [SampEx_Heur_Imp, SampEx_Int_Imp, RL_Imp]
+                            mem_N,            # mem_N: Impression parameter SampEx rule
+                            selection_v,      # selection_v: Selection vector
+                            outcome_v,        # outcome_v: Outcome vector
+                            trial_v,          # trial_v: Vector of trial numbers
+                            game_v,           # game_v: Vector of game numbers
+                            trial_max = NULL, # trial_max: Maximum number of trials in task
+                            points_goal,      # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
+                            option_n = NULL,  # option_n: Number of options
+                            game_n = NULL,    # game_n: Number of games
+                            prediction = FALSE # If TRUE, predictions are made from given parameters
+){ 
+  
+  # Parameters are assigned in the if statements for the different functions
+  # Q[1]: choice parameter (used in all models)
+  # Q[2]: reinforcement learning alpha parameter (used in RL and RLGoal)
+  # Q[3]: curvature parameter (used in RLGoas)
+  # Q[4]: lambda, loss aversion parameter (used in RLGoal)
+  
+  
+  # Extract some information
+  observations_n <- length(selection_v)
+  
+  # Placeholder for selection probabilities for all options
+  lik_mtx <- data.frame(trial = trial_v,
+                        game = game_v,
+                        selection = selection_v,
+                        lik = NA,
+                        pred = NA)
+  
+  # Placeholders for likelihoods of selecting each option
+  lik_mtx[paste0("o_", 1:option_n, "_lik")] <- NA
+  
+  # Loop over games
+  for(game_i in 1:game_n) {
+    
+    # Look over trials
+    for (trial_i in 1:trial_max) {
+      
+      # Get impressions
+      
+      if(grepl("SampEx", rule_Imp)) {
+        
+        # Get points_now
+        points_now <- sum(outcome_v[game_v == game_i & trial_v < trial_i])
+        
+        # Get memory_N and phi parameter values
+        memory_N <- mem_N
+        
+        if(grepl("Heur", rule_Imp)) {method_extrap <- "heuristic"}
+        if(grepl("Int", rule_Imp)) {method_extrap <- "integration"}
+        
+        # Get impressions
+        impressions_i <- SampEx_Imp(method_extrap = method_extrap,
+                                    memory_N = memory_N, 
+                                    selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                    outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                    trial_max = trial_max,
+                                    trial_now = trial_i,
+                                    points_goal = points_goal,
+                                    points_now = points_now)
+        
+      }
+      
+      if(rule_Imp %in% c("RL")) {
+        
+        # Get memory_N and phi parameter values
+        alpha_par <- Q[2]
+        
+        # Get impressions
+        impressions_i <- RL_Imp(alpha_par = alpha_par,
+                                selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                option_n = option_n)
+        
+      }
+      
+      if(rule_Imp %in% c("RLGoal")){
+        
+        # Get memory_N and phi parameter values
+        alpha_par <- Q[2]
+        curvature_par <- Q[3]
+        lambda_par <- Q[4]
+        
+        # Get impressions
+        impressions_i <- RLGoal_Imp(alpha_par = alpha_par,
+                                    selection_v = selection_v[game_v == game_i & trial_v < trial_i], 
+                                    outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                    goal = points_goal,
+                                    curvature_par = curvature_par,
+                                    lambda_par = lambda_par,
+                                    option_n = option_n)
+        
+      }
+      
+      if (rule_Imp %in% c("Mean")){
+        
+        # Get impressions
+        impressions_i <- Mean_Imp(selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                  outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                  trial_max = trial_max)
+        
+      }
+      
+      # Get choice probs
+      
+      if(rule_Choice == "Softmax") {
+        
+        phi_par <- Q[1]
+        
+        # Get selection probabilities
+        selprob_v <- Softmax_Choice(impressions = impressions_i, 
+                                    phi = phi_par, 
+                                    trial_now = trial_i)
+        
+        
+      }
+      
+      # Assign absolute prediction to lik_mtx
+      pred_abs <- (1:option_n)[selprob_v == max(selprob_v)]
+      if(length(pred_abs) > 1) {pred_abs <- sample(pred_abs, size = 1)}
+      lik_mtx$pred[lik_mtx$game == game_i & lik_mtx$trial == trial_i] <- pred_abs
+      
+      # Assign vector of selection probabilities to lik_mtx
+      lik_mtx[lik_mtx$game == game_i & lik_mtx$trial == trial_i, paste0("o_", 1:option_n, "_lik")] <- round(selprob_v, 3)
+      
+      # Get likelihood of selection on current trial
+      selection_i <- selection_v[trial_v == trial_i & game_v == game_i]
+      selprob_i <- round(selprob_v[selection_i], 3)
+      
+      # Assign to selprob_mtx
+      lik_mtx$lik[lik_mtx$trial == trial_i & lik_mtx$game == game_i] <- selprob_i
+      
+    }
+    
+  }
+  
+  if (isTRUE(prediction)){
+    
+    return(lik_mtx$pred == selection_v)
+    
+  }
+  
+  # Get likelihood vector for observed selections
+  lik_v <- lik_mtx$lik
+  
+  # Censor at extreme values
+  lik_mtx$lik[lik_mtx$lik > .999] <- .999
+  lik_mtx$lik[lik_mtx$lik < .001] <- .001
+  
+  # Calculate deviance: -2 times sum of log likelihoods
+  deviance <- -2 * sum(log(lik_mtx$lik))
+  
+  return(deviance)
+  
+}
            
           
 
