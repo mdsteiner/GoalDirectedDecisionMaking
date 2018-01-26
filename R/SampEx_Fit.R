@@ -15,31 +15,41 @@ source("R/SampExHeurModel.R")
 # Get data
 # ----------------------------
 
-modelRecovery <- TRUE
+modelRecovery <- FALSE
 
 if (modelRecovery){
   
-  dat <- as_tibble(readRDS("data/Study1Data/useData/ModelSimDat.rds"))
+  dat <- as_tibble(readRDS("data/Study1Data/useData/ModelSimDat_All.rds"))
+  
+  # Data cleaning
+  dat <- dat %>%
+    mutate(
+      selection = as.numeric(as.character(selection))
+    ) %>%
+    filter(
+      game > 0   # Remove game == 0 (practice games)
+    ) 
   
 } else {
   # get trial level data
   dat <- as_tibble(readRDS("data/Study1Data/useData/S1_dataTrialLevel.rds"))
+  
+  # Data cleaning
+  dat <- dat %>%
+    mutate(
+      game = game - 1,
+      selection = as.numeric(as.character(selection))
+    ) %>%
+    filter(
+      game > 0   # Remove game == 0 (practice games)
+    ) 
 }
 
 
 
-# Data cleaning
-dat <- dat %>%
-  mutate(
-    game = game - 1,
-    selection = as.numeric(as.character(selection))
-  ) %>%
-  filter(
-    game > 0   # Remove game == 0 (practice games I think)
-    ) 
-
 # Number of Subjects
-subj_max <- 2 #length(unique(dat$id))
+subj_max <- 4 #length(unique(dat$id))
+
 
 # Game parameters
 trial_max <- 25
@@ -52,11 +62,11 @@ Goal <- 100
 # Grid search parameters
 #   The grid search will look over all combinations of these parameters
 
-N_par_v <- 1:20                     # N paramter for SampEx Impression
-alpha_par_v <- seq(0, 8, .1)        # Alpha parameter for reinforcement learning Impression
-phi_par_v <- seq(0.0, 8, .1)        # Phi parameter for softmax choice
-curvature_par_v <- seq(0.1, 2, 0.1) # curvature parameter utility function RLGoal Impression
-lambda_par_v <- seq(0.1, 3, 0.1)    # loss aversion parameter utility function RLGoal Impression
+N_par_v <- 1:15                      # N paramter for SampEx Impression
+alpha_par_v <- seq(0, 1, .1)         # Alpha parameter for reinforcement learning Impression
+phi_par_v <- seq(0.0, 3, .3)         # Phi parameter for softmax choice
+curvature_par_v <- seq(0.0, 1, 0.2)  # curvature parameter utility function RLGoal Impression
+lambda_par_v <- c(0.5, 1, 1.5, 2.25) # loss aversion parameter utility function RLGoal Impression
 
 # Vector of all models to fit to each participant
 models_to_fit <- c(#"SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
@@ -90,7 +100,7 @@ subj_fits <- subj_fits %>%
 #   Takes a row number from subj_fits, and returns MLE estimates for the
 #    subject and model in the given row
 mle_grid_cluster_fun <- function(i) {
-  
+
   # Get participant id
   id_i <- subj_fits$id[i]
   
@@ -112,7 +122,7 @@ mle_grid_cluster_fun <- function(i) {
   
   if(model_i != "Random") {
   
-  if(!grepl("RLGoal", rule_Imp_i)){- # If the Model is not RLGoal it only needs one Impression parameter
+  if(!grepl("RLGoal", rule_Imp_i)){ # If the Model is not RLGoal it only needs one Impression parameter
       
   # Get impression and choice parameter combinations based on models
   
@@ -181,7 +191,7 @@ mle_grid_cluster_fun <- function(i) {
     for(par_i in 1:nrow(par_grid)) {
       
       # Get parameters for current run
-      pars_Imp_i <- c(par_grid$pars_Imp_alpha[par_i],
+      pars_Imp_i <- c(par_grid$pars_Imp[par_i],
                       par_grid$pars_Imp_curvature[par_i],
                       par_grid$pars_Imp_lambda[par_i])
       pars_Choice_i <- par_grid$pars_Choice[par_i]
@@ -210,7 +220,7 @@ mle_grid_cluster_fun <- function(i) {
   # Get minimum bic value and parameters
   
   par_grid_min <- par_grid %>% 
-    filter(bic == min(bic)) %>%
+    filter(bic == min(bic, na.rm = TRUE)) %>%
     sample_n(1) # If there are more than 1 best combinations, choose one at random
   
   }
@@ -241,7 +251,7 @@ mle_grid_cluster_fun <- function(i) {
 # ----------------------------
 
 # Set up cluster
-cores_n <- 3   # Number of cores to run on
+cores_n <- 4   # Number of cores to run on
 cl <- makeCluster(cores_n)
 
 # Send libraries to cluster
@@ -249,7 +259,7 @@ clusterEvalQ(cl, library(tidyverse))
 
 # Export objects to cluster
 clusterExport(cl, list("subj_fits", 
-                       "N_par_v", "phi_par_v", "alpha_par_v",
+                       "N_par_v", "phi_par_v", "alpha_par_v", "curvature_par_v", "lambda_par_v",
                        "trial_max", "Goal", "dat", 
                        "Model_Lik", 
                        "SampEx_Imp", "RL_Imp", "RLGoal_Imp", "Mean_Imp",
@@ -337,5 +347,5 @@ if (modelRecovery){
 
 
 
-
+Sys.time()
 

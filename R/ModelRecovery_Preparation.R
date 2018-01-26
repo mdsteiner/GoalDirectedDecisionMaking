@@ -10,10 +10,11 @@ library(tidyverse)
 # Read learning functions
 source("r/SampExHeurModel.R")
 
-subjects <- 400
+subjects <- 500
 games <- 10
 trials <- 25
-varCond <- "Equal"
+varCond <- "Low"
+
 
 # Note: Table of means and sds as used in the study
 
@@ -27,13 +28,16 @@ varCond <- "Equal"
 # Vectors with environment information
 
 Envs <- c("Equal", "High", "Low")
+sub_start_envs <- c(0, 500, 1000)
 m_A_envs <- c(4, 2.5, 4)
 sd_A_envs <- rep(2.5, 3)
 m_B_envs <- c(4, 4, 2.5)
 sd_B_envs <- rep(11, 3)
 
 
+
 ind <- Envs == varCond
+sub_start <- sub_start_envs[ind]
 m_A <- m_A_envs[ind]
 sd_A <- sd_A_envs[ind]
 
@@ -41,9 +45,9 @@ m_B <- m_B_envs[ind]
 sd_B <- sd_B_envs[ind]
 
 N_par_v <- 5:15                       # N paramter for SampEx Impression
-alpha_par_v <- seq(0.2, 1, .01)        # Alpha parameter for reinforcement learning Impression
+alpha_par_v <- seq(0.1, 1, .01)        # Alpha parameter for reinforcement learning Impression
 phi_par_v <- seq(0.1, 3, .05)         # Phi parameter for softmax choice
-curvature_par_v <- seq(0.3, 1.2, 0.1) # curvature parameter utility function RLGoal Impression
+curvature_par_v <- seq(0.2, 1, 0.05) # curvature parameter utility function RLGoal Impression
 lambda_par_v <- seq(0.6, 2.5, 0.1)      # loss aversion parameter utility function RLGoal Impression
 
 models_to_fit <- c(#"SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
@@ -60,7 +64,7 @@ n_models <- length(models_to_fit)
 # create id variable
 ids <- NULL
 
-for (kk in 1:subjects){
+for (kk in (sub_start +1):(subjects + sub_start)){
   
   ids <- c(ids, paste0("id_", ifelse(kk < 10, "00", ifelse(kk < 100, "0", "")), kk))
   
@@ -192,7 +196,7 @@ for (sub in 1:length(unique(dat$id))){
   
 }
 
-# saveRDS(dat, "data/Study1Data/useData/ModelSimDat_Equal.rds")
+# saveRDS(dat, "data/Study1Data/useData/ModelSimDat_Low.rds")
 # 
 # ## Run this when data files for each environments are available
 # dat_Low <- readRDS("data/Study1Data/useData/ModelSimDat_Low.rds")
@@ -292,7 +296,7 @@ temp_col <- piratepal("basel")
 # plot the bin- and mean lines over all variance conditions
 cols <- c("SampEx_Int_Goal" = temp_col[[1]],
           "NaturalMean" = temp_col[[2]], "RL" = temp_col[[3]],
-          "Random" = temp_col[[4]])
+          "Random" = temp_col[[4]], "RLGoal" = temp_col[[5]])
 ggplot(bin_df, aes(x = mean_bin, y = pRisky)) + 
   geom_line(data = filter(bin_df, model == "NaturalMean"),
             aes(group=id), col = temp_col[[2]], lwd = .3, alpha = 0.08) +
@@ -302,6 +306,8 @@ ggplot(bin_df, aes(x = mean_bin, y = pRisky)) +
             aes(group=id), col = temp_col[[3]], lwd = .3, alpha = 0.08) +
   geom_line(data = filter(bin_df, model == "Random"),
             aes(group=id), col = temp_col[[4]], lwd = .3, alpha = 0.08) +
+  geom_line(data = filter(bin_df, model == "RLGoal"),
+            aes(group=id), col = temp_col[[5]], lwd = .3, alpha = 0.08) +
   stat_smooth(data = filter(bin_df, model == "NaturalMean"),
               aes(col = "NaturalMean"), method ="loess", lwd = 1.5) +
   stat_smooth(data = filter(bin_df, model == "SampEx_Int_Goal"),
@@ -310,6 +316,8 @@ ggplot(bin_df, aes(x = mean_bin, y = pRisky)) +
               aes(col = "RL"), method = "loess", lwd = 1.5) +
   stat_smooth(data = filter(bin_df, model == "Random"),
               aes(col = "Random"), method = "loess", lwd = 1.5) +
+  stat_smooth(data = filter(bin_df, model == "RLGoal"),
+              aes(col = "RLGoal"), method = "loess", lwd = 1.5) +
   scale_colour_manual(name = "Models", values = cols) +
 #  scale_fill_manual(name = "Models", values = cols) +
   ylim(0,1) +
@@ -329,7 +337,7 @@ temp_col <- piratepal("basel")
 
 cols <- c("SampEx_Int_Goal" = temp_col[[1]],
           "NaturalMean" = temp_col[[2]], "RL" = temp_col[[3]],
-          "Random" = temp_col[[4]])
+          "Random" = temp_col[[4]], "RLGoal" = temp_col[[5]])
 
 ggplot(df_trialAgg, aes(x = trial, y = risky_rate)) + 
   geom_line(data = filter(df_trialAgg, model == "SampEx_Int_Goal"),
@@ -340,6 +348,8 @@ ggplot(df_trialAgg, aes(x = trial, y = risky_rate)) +
             aes(group=id), col = temp_col[[3]], lwd = .3, alpha = 0.1) +
   geom_line(data = filter(df_trialAgg, model == "Random"),
             aes(group=id), col = temp_col[[4]], lwd = .3, alpha = 0.1) +
+  geom_line(data = filter(df_trialAgg, model == "RLGoal"),
+            aes(group=id), col = temp_col[[5]], lwd = .3, alpha = 0.1) +
   stat_smooth(data = filter(df_trialAgg, model == "SampEx_Int_Goal"),
               aes(col = "SampEx_Int_Goal"),method ="loess", lwd = 1.5) +
   stat_smooth(data = filter(df_trialAgg, model == "NaturalMean"),
@@ -348,6 +358,8 @@ ggplot(df_trialAgg, aes(x = trial, y = risky_rate)) +
               aes(col = "RL"), method = "loess",  lwd = 1.5) +
   stat_smooth(data = filter(df_trialAgg, model == "Random"),
               aes(col = "Random"), method = "loess",  lwd = 1.5) +
+  stat_smooth(data = filter(df_trialAgg, model == "RLGoal"),
+              aes(col = "RLGoal"), method = "loess",  lwd = 1.5) +
   scale_colour_manual(name="Models",values=cols) +
   ylim(0,1) +
   ylab("Likelihood Risky") + xlab("Trials") +

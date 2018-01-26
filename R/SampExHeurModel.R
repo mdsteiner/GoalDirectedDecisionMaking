@@ -88,6 +88,14 @@ Softmax_Choice <- function(impressions,       # impressions: Vector (or list) of
     p_select <- exp((trial_now / 10) ^ phi * impressions) / sum(exp((trial_now / 10) ^ phi * impressions))
 
   }
+  
+  if (any(is.na(p_select)) | any(!is.finite(p_select))){
+    
+    # only works with two options
+    p_select[which.min(impressions)] <- 0.0001
+    p_select[which.max(impressions)] <- 0.9999
+    
+  }
 
   # Vector of selection probabilities
   return(p_select)
@@ -358,7 +366,7 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
   }
   
   # Get final impression
-  impression_final <- data_df[trial_max, paste0("imp_", 1:option_n)]
+  impression_final <- unlist(data_df[trial_max, paste0("imp_", 1:option_n)])
   
   return(impression_final)
     
