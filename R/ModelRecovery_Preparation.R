@@ -10,7 +10,7 @@ library(tidyverse)
 # Read learning functions
 source("r/SampExHeurModel.R")
 
-subjects <- 500
+subjects <- 300
 games <- 10
 trials <- 25
 varCond <- "Low"
@@ -47,8 +47,9 @@ sd_B <- sd_B_envs[ind]
 N_par_v <- 5:15                       # N paramter for SampEx Impression
 alpha_par_v <- seq(0.1, 1, .01)        # Alpha parameter for reinforcement learning Impression
 phi_par_v <- seq(0.1, 3, .05)         # Phi parameter for softmax choice
+phi_par_v_SampEx <- seq(0.05, 1.5, 0.05)
 curvature_par_v <- seq(0.2, 1, 0.05) # curvature parameter utility function RLGoal Impression
-lambda_par_v <- seq(0.6, 2.5, 0.1)      # loss aversion parameter utility function RLGoal Impression
+lambda_par_v <- seq(0.9, 2.5, 0.1)      # loss aversion parameter utility function RLGoal Impression
 
 models_to_fit <- c(#"SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
   #"SampEx_Heur_NoGoal",  # Sample extrapolation with Heuristic and NoGoal
@@ -94,7 +95,9 @@ dat <- tibble(
   pars_Imp_lambda = rep(c(rep(NA, subjects / n_models * 3),
                           sample(lambda_par_v, size = subjects / n_models, replace = TRUE),
                           rep(NA, subjects / n_models)), each = games * trials),
-  pars_Choice = rep(c(sample(phi_par_v, size = subjects / n_models * 4, replace = TRUE),
+  pars_Choice = rep(c(sample(phi_par_v, size = subjects / n_models, replace = TRUE),
+                      sample(phi_par_v_SampEx, size = subjects / n_models, replace = TRUE),
+                      sample(phi_par_v, size = subjects / n_models * 2, replace = TRUE),
                   rep(NA, subjects / n_models)), each = games * trials),
   selection = NA,
   outcome = NA,

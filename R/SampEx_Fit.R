@@ -65,8 +65,9 @@ Goal <- 100
 N_par_v <- 1:15                      # N paramter for SampEx Impression
 alpha_par_v <- seq(0, 1, .1)         # Alpha parameter for reinforcement learning Impression
 phi_par_v <- seq(0.0, 3, .3)         # Phi parameter for softmax choice
-curvature_par_v <- seq(0.0, 1, 0.2)  # curvature parameter utility function RLGoal Impression
-lambda_par_v <- c(0.5, 1, 1.5, 2.25) # loss aversion parameter utility function RLGoal Impression
+phi_par_v_SampEx <- seq(0.0, 1.5, .15)
+curvature_par_v <- seq(0.0, 1, 0.25)  # curvature parameter utility function RLGoal Impression
+lambda_par_v <- c(1, 1.5, 2.25) # loss aversion parameter utility function RLGoal Impression
 
 # Vector of all models to fit to each participant
 models_to_fit <- c(#"SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
@@ -128,13 +129,16 @@ mle_grid_cluster_fun <- function(i) {
   
   # Impression parameter sequence
   if(grepl("RL", rule_Imp_i)) {pars_Imp_v <- alpha_par_v}  # RL impression uses alpha
-
-  if(grepl("SampEx", rule_Imp_i)) {pars_Imp_v <- N_par_v}  # SampEx impression uses N
   
   if(grepl("Mean", rule_Imp_i)){pars_Imp_v <- NA} # No Impression parameter for the mean rule
     
   # Choice parameter sequence
   if(grepl("Softmax", rule_Choice_i)) {pars_Choice_v <- phi_par_v} # Sofmax uses phi
+    
+  if(grepl("SampEx", rule_Imp_i)) {
+    pars_Imp_v <- N_par_v    # SampEx impression uses N
+    pars_Choice_v <- phi_par_v_SampEx
+    } 
     
   # Set up grid search for all combinations of parameters
   par_grid <- expand.grid(pars_Imp = pars_Imp_v,
@@ -259,7 +263,7 @@ clusterEvalQ(cl, library(tidyverse))
 
 # Export objects to cluster
 clusterExport(cl, list("subj_fits", 
-                       "N_par_v", "phi_par_v", "alpha_par_v", "curvature_par_v", "lambda_par_v",
+                       "N_par_v", "phi_par_v", "alpha_par_v", "curvature_par_v", "lambda_par_v", "phi_par_v_SampEx",
                        "trial_max", "Goal", "dat", 
                        "Model_Lik", 
                        "SampEx_Imp", "RL_Imp", "RLGoal_Imp", "Mean_Imp",
