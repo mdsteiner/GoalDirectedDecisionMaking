@@ -16,6 +16,7 @@ df_trial <- df_trial %>%
   mutate(game = game - 2,
          id.f = as.factor(id),
          goal.condition.f = as.factor(goal.condition),
+         variance.condition.f = as.factor(variance.condition),
          overGoal.f = as.factor(overGoal),
          goal.condition.bin = as.factor(case_when(goal.condition == "NoGoal" ~ 0,
                                                   goal.condition == "Goal" ~ 1)))
@@ -193,6 +194,14 @@ ggplot(bin_df, aes(x = mean_bin, y = pRisky)) +
 # mixed effects model with random intercepts for subjects and games
 model <- glmer(high.var.chosen ~ goal.condition.bin * overGoal.f + points.cum +
                  (1|id.f/game), data = df_trial, family = "binomial")
+
+summary(model)
+r2(model)
+
+# mixed effects model with random intercepts for subjects and games, this time with environments
+model <- glmer(high.var.chosen ~ goal.condition.bin * overGoal.f + points.cum +
+               variance.condition + (1|id.f/game), data = df_trial,
+               family = "binomial")
 
 summary(model)
 r2(model)
