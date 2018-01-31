@@ -28,7 +28,7 @@ varCond <- "Low"
 # Vectors with environment information
 
 Envs <- c("Equal", "High", "Low")
-sub_start_envs <- c(0, 500, 1000)
+sub_start_envs <- c(0, subjects, subjects * 2)
 m_A_envs <- c(4, 2.5, 4)
 sd_A_envs <- rep(2.5, 3)
 m_B_envs <- c(4, 4, 2.5)

@@ -23,6 +23,8 @@ Let's first visualize the finding and then check with the regression analysis. I
 
 ### Plots
 
+In the goal condition we would expect an increase in the likelihood of a risky choice over points (e.g. house money effect, i.e. the more I've won so far the riskier I can play with it; but note that this is a post hoc explanation), with a drop as soon as the goal is reached. In the no goal there should be no such drop.
+
 Let's first look at the plots over all variance conditions to see the general trend.
 
 
@@ -43,27 +45,6 @@ df_trial <- df_trial %>%
 df_trialAgg <- df_trial %>%
   group_by(id, variance.condition, goal.condition, trial) %>%
   summarise(risky_rate = mean(high.var.chosen))
-
-
-# Create plot of pRisky over Trials
-cols <- c("Goal" = "red", "NoGoal" = "blue")
-ggplot(df_trialAgg, aes(x = trial, y = risky_rate)) + 
-  geom_line(data = filter(df_trialAgg, goal.condition == "Goal"),
-              aes(group=id), col = "blue", lwd = .3, alpha = 0.1) +
-  geom_line(data = filter(df_trialAgg, goal.condition == "NoGoal"),
-              aes(group=id), col = "red", lwd = .3, alpha = 0.1) +
-  stat_smooth(data = filter(df_trialAgg, goal.condition == "Goal"),
-              aes(col = "Goal"),method ="loess", lwd = 1.5) +
-  stat_smooth(data = filter(df_trialAgg, goal.condition == "NoGoal"),
-              aes(col = "NoGoal"), method = "loess",  lwd = 1.5) +
-  scale_colour_manual(name="Goal Conditions",values=cols) +
-  ylim(0,1) +
-  ylab("Likelihood Risky") + xlab("Trials") +
-  theme_bw() +
-  theme(axis.title.x = element_text(size = 15, vjust=-.2)) +
-  theme(axis.title.y = element_text(size = 15, vjust=0.3)) +
-  facet_wrap(~ variance.condition)
-
 
 # Now make bins of data to get probability values
 get_bins <- function(id, goal_cond, var_cond, point_vec, high_var_vec, nbins){
@@ -230,7 +211,12 @@ ggplot(df_trialAgg, aes(x = trial, y = risky_rate)) +
 ```
 
 
+* We see, at least in some conditions, the hypothesized pattern of the dip in the likelihood of a risky choice at around 100 points. This only occurs in the goal condition. The U-shape is a method artefact.
+
 ### Regression Analysis
+
+The dependent variable was whether the risky option was chosen (1) or not (0) at a given trial. Predictors were the goal condition (no goal = 0, goal = 1), whether the goal of 100 points was reached (below goal = 0, above goal = 1), the points earned by a given trial and in the second model, the environment. Random intercepts were included for every person and every game.
+
 
 We used a generalized mixed effects model. This is how it looked like:
 
@@ -268,11 +254,25 @@ It seems that in general, in the *NoGoal* condition, the probability of a risky 
  | variance.conditionLow       |      -0.307820  |   0.095010  |  -3.240  |   0.0012 **  | 
  | goal.condition.bin1:overGoal.f1 |  -0.929184   |  0.057912 |  -16.045  |  < 2e-16 *** | 
 
+* The regression analysis showed a significant interaction of overGoal and goal condition, i.e. subjects from the no goal condition were more likely to choose risky after having reached the goal, while subjects from the goal condition where less likely to choose risky after having reached the goal. Likelihood of choosing risky was higher in the *High* environment compared to the *Equal* environment and lower in the *Low* environment compared to the *Equal* environment.
 
 
-## Modeling Results
+## Individual Modeling
 
-Since the Reinforcement learning target model did not do a good job, we removed it again, to have clearer results for the rest...
+We would expect that subjects from the goal condition are best classified by the model that accounts for the goal. The subjects from the no goal model should be best classified by either the mean or the reinforcement learning model.
+
+The next section provides a short overview over the models.
+
+### Description of the Models used
+
+| Model | Description | Impression parameter | Choice Parameter | Total Free Parameters |
+|:-----|-----------------------------------------------------------|----------|--------|-----|
+|Random          | Baseline model to compare the others with. Random choice in every trial | - | - | 0 |
+|NaturalMean          | For each option takes the mean of all seen outcomes. Then put's these means into a softmax | - | $\phi$ | 1 |
+|RL          | Standard reinforcement learning model with one learning parameter for impression updating. Impressions are then put into a softmax. | $\alpha$ (learning rate) | $\phi$ | 2 |
+|SampEx_Int_Goal          | For each option calculates the mean and standard deviation of the last N (free discrete parameter that was estimated) outcomes, then creates a cummulative (for the number of trials left) normal density and from this derives the probability of sampling a value at least as big as the difference from the current point total to the goal. Then put's these probabilities into a softmax |$N$ (memory capacity) | $\phi$ | 2 |
+
+### Modeling results
 
 Here are tables showing the proportion of people from the Goal and NoGoal condition were classified by which model:
 
@@ -345,14 +345,223 @@ Here are some summary tables to show model fits and parameter value statistics.
 |SampEx_Int_Goal |Low                | 304.3941| 33.62546|    2.7777778|  3.7553381|       1.7014653|     0.6521926| 27|
 
 
-## Description of the Models used
 
-| Model | Description |
-|:-----|-----------------------------------------------------------|
-|Random          | Baseline model to compare the others with. Random choice in every trial |
-|NaturalMean          | For each option takes the mean of all seen outcomes. Then put's these means into a softmax |
-|RL          | Standard reinforcement learning model with one learning parameter for impression updating. Impressions are then put into a softmax. |
-|SampEx_Int_Goal          | For each option calculates the mean and standard deviation of the last N (free discrete parameter that was estimated) outcomes, then creates a cummulative (for the number of trials left) normal density and from this derives the probability of sampling a value at least as big as the difference from the current point total to the goal. Then put's these probabilities into a softmax |
+* We saw that subjects from the goal condition are more often (usually around twice as often) best classified by the goal model, however the majority in both groups is usually best classified by standard reinforcement learnin model. The good thing is that in the goal condition the proportion best classified by the goal model is substantial (around one third) providing evidence that it can be important to incorporate a subject's goal in a model. Mean parameter values didn't differ much over environments. The memory capacity parameter in the SampEx model was on average between 2.5 and 3 samples.
+
+
+## Previous/ Preregistered Analysis Results
+
+Here are the Plots from the previous analyses that are also interesting and could be used here.
+
+
+```{r  echo = FALSE,out.width = "85%", fig.cap = "Proportion of risky options chosen, separated for goal condition and the state. 100 Points corresponded to the goal in the goal condition. The effect was roughly the same over environments. Bold horizontal lines indicate the mean. Boxes indicate 95% bayesian highest density intervals."}
+
+include_graphics("/Users/msteiner/Dropbox/Masterarbeit/eegoals/plot/pRiskyAboveUnderGoalNoVarCond.pdf")
+
+```
+
+
+
+
+```{r  echo = FALSE,out.width = "85%", fig.cap = "Probability of choosing the risky option, given the RST evidence strengths for that option. Only data from goal condition was used. Point sizes and numbers above the points indicate the proportion of occurrences within these bins of evidence strengths."}
+
+include_graphics("/Users/msteiner/Dropbox/Masterarbeit/eegoals/plot/EvidenceStrengthsRisky.pdf")
+
+```
+
+
+```{r  echo = FALSE,out.width = "85%", fig.cap = "Differences in prediction accuracy rates ($pA_{RST} - pA_{EV}$) in trials in which the model prediction differed, separated for both goals and environments. A value above 0 (above the dashed line), indicates higher prediction accuracy rate of RST, a value below 0 a higher prediction accuracy rate of EV. Bold horizontal lines indicate the mean. Boxes indicate 95% Bayesian highest density intervals."}
+
+include_graphics("/Users/msteiner/Dropbox/Masterarbeit/eegoals/plot/predictionAccuraciesDiffRST-EV.pdf")
+
+```
+
+
+
+## Simulation based plots for the same analyses
+
+First the plots for the likelihood of a risky choice given the number of points:
+
+
+```{r echo = FALSE, fig.cap="Simulation Data: Likelihood of a risky choice by number of points earned, separated for environments.", message = FALSE, warning=FALSE}
+
+dat <- readRDS("data/Study1Data/useData/ModelSimDat_All.rds")
+
+envs <- rep(c("Low", "High", "Equal"), each = nrow(dat) / 3)
+
+dat$environment <- envs
+
+# Now make bins of data to get probability values
+get_bins <- function(id, model, point_vec, high_var_vec, nbins, envi){
+  
+  # create bins
+  bin_size <- (max(point_vec) - min(point_vec)) / nbins
+  
+  bin_int <- cumsum(c(min(point_vec, na.rm = TRUE), rep(bin_size, nbins)))
+  
+  # compute the probability of choosing option 1, given a certain RSF.diff value
+  high_var_mean <- unlist(lapply(seq_len(nbins),
+                                 function(x, point_vec, bin_int, high_var_vec){
+                                   mean(high_var_vec[point_vec >= bin_int[x] &
+                                                       point_vec < bin_int[x+1]],
+                                        na.rm = TRUE)
+                                 },
+                                 point_vec = point_vec, bin_int = bin_int,
+                                 high_var_vec = high_var_vec))
+  
+  # compute the mean of the values from the bin
+  bin_mean <- unlist(lapply(seq_len(nbins),
+                            function(x, point_vec, bin_int, high_var_vec){
+                              mean(point_vec[point_vec >= bin_int[x] &
+                                               point_vec < bin_int[x+1]],
+                                   na.rm = TRUE)
+                            },
+                            point_vec = point_vec, bin_int = bin_int,
+                            high_var_vec = high_var_vec))
+  
+  # get the number of observations that were used in each bin
+  numobs <- unlist(lapply(seq_len(nbins),
+                          function(x, point_vec, bin_int, high_var_vec){
+                            vec <- high_var_vec[point_vec >= bin_int[x] &
+                                                  point_vec < bin_int[x+1]]
+                            vec <- vec[!is.na(vec)]
+                            
+                            lvec <- length(vec)
+                            
+                            lvec
+                            
+                          },
+                          point_vec = point_vec, bin_int = bin_int,
+                          high_var_vec = high_var_vec))
+  
+  # bind to data frame
+  df_bin <- tibble("id" = id,
+                   "pRisky" = high_var_mean,
+                   "mean_bin" = bin_mean,
+                   "nObs" = numobs,
+                   "model" = model,
+                   "environment" = envi
+  )
+  
+}
+
+# define number of bins
+nbins <- 10
+
+# first run to create data frame
+id <- unique(dat$id)[1]
+model <- dat$model[dat$id == id][1]
+point_vec <- dat$points.cum[dat$id == id]
+high_var_vec <- dat$high.var.chosen[dat$id == id]
+envi <- dat$environment[dat$id == id][1]
+
+bin_df <- get_bins(id, model, point_vec, high_var_vec, nbins, envi)
+
+
+# Now go through the rest of the subjects and bind the data frames
+for (sub in 2:length(unique(dat$id))){
+  
+  id <- unique(dat$id)[sub]
+  model <- dat$model[dat$id == id][1]
+  point_vec <- dat$points.cum[dat$id == id]
+  high_var_vec <- dat$high.var.chosen[dat$id == id]
+  envi <- dat$environment[dat$id == id][1]
+  
+  bin_df_temp <- get_bins(id, model, point_vec, high_var_vec, nbins, envi)
+  
+  bin_df <- rbind(bin_df, bin_df_temp)
+  
+}
+
+library(yarrr)
+temp_col <- piratepal("basel")
+# plot the bin- and mean lines over all variance conditions
+cols <- c("SampEx_Int_Goal" = temp_col[[1]],
+          "NaturalMean" = temp_col[[2]], "RL" = temp_col[[3]],
+          "Random" = temp_col[[4]])
+ggplot(bin_df, aes(x = mean_bin, y = pRisky)) + 
+  geom_line(data = filter(bin_df, model == "NaturalMean"),
+            aes(group=id), col = temp_col[[2]], lwd = .3, alpha = 0.08) +
+  geom_line(data = filter(bin_df, model == "SampEx_Int_Goal"),
+            aes(group=id), col = temp_col[[1]], lwd = .3, alpha = 0.08) +
+  geom_line(data = filter(bin_df, model == "RL"),
+            aes(group=id), col = temp_col[[3]], lwd = .3, alpha = 0.08) +
+  geom_line(data = filter(bin_df, model == "Random"),
+            aes(group=id), col = temp_col[[4]], lwd = .3, alpha = 0.08) +
+  stat_smooth(data = filter(bin_df, model == "NaturalMean"),
+              aes(col = "NaturalMean"), method ="loess", lwd = 1.5) +
+  stat_smooth(data = filter(bin_df, model == "SampEx_Int_Goal"),
+              aes(col = "SampEx_Int_Goal"), method = "loess", lwd = 1.5) +
+  stat_smooth(data = filter(bin_df, model == "RL"),
+              aes(col = "RL"), method = "loess", lwd = 1.5) +
+  stat_smooth(data = filter(bin_df, model == "Random"),
+              aes(col = "Random"), method = "loess", lwd = 1.5) +
+  scale_colour_manual(name = "Models", values = cols) +
+#  scale_fill_manual(name = "Models", values = cols) +
+  ylim(0,1) + xlim(-25,150) +
+  ylab("Likelihood Risky") + xlab("Points") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 15, vjust=-.2)) +
+  theme(axis.title.y = element_text(size = 15, vjust=0.3)) +
+  facet_wrap(~ environment)
+
+```
+
+
+And now the same but with trial on the x-axis
+
+
+```{r echo = FALSE, fig.cap="Simulation Data: Likelihood of a risky choice by trial number, separated for environments.", message = FALSE, warning=FALSE}
+
+# Create plot of pRisky by Trial
+df_trialAgg <- dat %>%
+  group_by(id, model, trial, environment) %>%
+  summarise(risky_rate = mean(high.var.chosen))
+
+
+temp_col <- piratepal("basel")
+
+cols <- c("SampEx_Int_Goal" = temp_col[[1]],
+          "NaturalMean" = temp_col[[2]], "RL" = temp_col[[3]],
+          "Random" = temp_col[[4]])
+
+ggplot(df_trialAgg, aes(x = trial, y = risky_rate)) + 
+  geom_line(data = filter(df_trialAgg, model == "SampEx_Int_Goal"),
+            aes(group=id), col = temp_col[[1]], lwd = .3, alpha = 0.1) +
+  geom_line(data = filter(df_trialAgg, model == "NaturalMean"),
+            aes(group=id), col = temp_col[[2]], lwd = .3, alpha = 0.1) +
+  geom_line(data = filter(df_trialAgg, model == "RL"),
+            aes(group=id), col = temp_col[[3]], lwd = .3, alpha = 0.1) +
+  geom_line(data = filter(df_trialAgg, model == "Random"),
+            aes(group=id), col = temp_col[[4]], lwd = .3, alpha = 0.1) +
+  stat_smooth(data = filter(df_trialAgg, model == "SampEx_Int_Goal"),
+              aes(col = "SampEx_Int_Goal"),method ="loess", lwd = 1.5) +
+  stat_smooth(data = filter(df_trialAgg, model == "NaturalMean"),
+              aes(col = "NaturalMean"), method = "loess",  lwd = 1.5) +
+  stat_smooth(data = filter(df_trialAgg, model == "RL"),
+              aes(col = "RL"), method = "loess",  lwd = 1.5) +
+  stat_smooth(data = filter(df_trialAgg, model == "Random"),
+              aes(col = "Random"), method = "loess",  lwd = 1.5) +
+  scale_colour_manual(name="Models",values=cols) +
+  ylim(0,1) +
+  ylab("Likelihood Risky") + xlab("Trials") +
+  theme_bw() +
+  theme(axis.title.x = element_text(size = 15, vjust=-.2)) +
+  theme(axis.title.y = element_text(size = 15, vjust=0.3)) +
+  facet_wrap(~ environment)
+
+```
+
+
+
+
+
+
+```{r  echo = FALSE, out.width = "85%", fig.cap = "Plot of simulated data. Proportion of risky options chosen, separated for goal condition and the state. 100 Points corresponded to the goal in the goal condition. The effect was roughly the same over environments. Bold horizontal lines indicate the mean. Boxes indicate 95% bayesian highest density intervals."}
+
+include_graphics("/Users/msteiner/Dropbox/Masterarbeit/eegoals/plot/pRiskyAboveUnderGoalNoVarCondSimulation.pdf")
+
+```
 
 
 
