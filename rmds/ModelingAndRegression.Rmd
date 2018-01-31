@@ -354,7 +354,7 @@ Here are some summary tables to show model fits and parameter value statistics.
 Here are the Plots from the previous analyses that are also interesting and could be used here.
 
 
-```{r  echo = FALSE,out.width = "85%", fig.cap = "Proportion of risky options chosen, separated for goal condition and the state. 100 Points corresponded to the goal in the goal condition. The effect was roughly the same over environments. Bold horizontal lines indicate the mean. Boxes indicate 95% bayesian highest density intervals."}
+```{r  out.width = "85%", fig.cap = "Proportion of risky options chosen, separated for goal condition and the state. 100 Points corresponded to the goal in the goal condition. The effect was roughly the same over environments. Bold horizontal lines indicate the mean. Boxes indicate 95% bayesian highest density intervals."}
 
 include_graphics("/Users/msteiner/Dropbox/Masterarbeit/eegoals/plot/pRiskyAboveUnderGoalNoVarCond.pdf")
 
@@ -363,14 +363,14 @@ include_graphics("/Users/msteiner/Dropbox/Masterarbeit/eegoals/plot/pRiskyAboveU
 
 
 
-```{r  echo = FALSE,out.width = "85%", fig.cap = "Probability of choosing the risky option, given the RST evidence strengths for that option. Only data from goal condition was used. Point sizes and numbers above the points indicate the proportion of occurrences within these bins of evidence strengths."}
+```{r  out.width = "85%", fig.cap = "Probability of choosing the risky option, given the RST evidence strengths for that option. Only data from goal condition was used. Point sizes and numbers above the points indicate the proportion of occurrences within these bins of evidence strengths."}
 
 include_graphics("/Users/msteiner/Dropbox/Masterarbeit/eegoals/plot/EvidenceStrengthsRisky.pdf")
 
 ```
 
 
-```{r  echo = FALSE,out.width = "85%", fig.cap = "Differences in prediction accuracy rates ($pA_{RST} - pA_{EV}$) in trials in which the model prediction differed, separated for both goals and environments. A value above 0 (above the dashed line), indicates higher prediction accuracy rate of RST, a value below 0 a higher prediction accuracy rate of EV. Bold horizontal lines indicate the mean. Boxes indicate 95% Bayesian highest density intervals."}
+```{r  out.width = "85%", fig.cap = "Differences in prediction accuracy rates ($pA_{RST} - pA_{EV}$) in trials in which the model prediction differed, separated for both goals and environments. A value above 0 (above the dashed line), indicates higher prediction accuracy rate of RST, a value below 0 a higher prediction accuracy rate of EV. Bold horizontal lines indicate the mean. Boxes indicate 95% Bayesian highest density intervals."}
 
 include_graphics("/Users/msteiner/Dropbox/Masterarbeit/eegoals/plot/predictionAccuraciesDiffRST-EV.pdf")
 
@@ -557,7 +557,7 @@ ggplot(df_trialAgg, aes(x = trial, y = risky_rate)) +
 
 
 
-```{r  echo = FALSE, out.width = "85%", fig.cap = "Plot of simulated data. Proportion of risky options chosen, separated for goal condition and the state. 100 Points corresponded to the goal in the goal condition. The effect was roughly the same over environments. Bold horizontal lines indicate the mean. Boxes indicate 95% bayesian highest density intervals."}
+```{r   out.width = "85%", fig.cap = "Plot of simulated data. Proportion of risky options chosen, separated for goal condition and the state. 100 Points corresponded to the goal in the goal condition. The effect was roughly the same over environments. Bold horizontal lines indicate the mean. Boxes indicate 95% bayesian highest density intervals."}
 
 include_graphics("/Users/msteiner/Dropbox/Masterarbeit/eegoals/plot/pRiskyAboveUnderGoalNoVarCondSimulation.pdf")
 
