@@ -78,6 +78,9 @@ Softmax_Choice <- function(impressions,       # impressions: Vector (or list) of
   # Log version of choice rule
   if (version == "log") {
     
+    if (phi <= 0){
+      return(c(0.5, 0.5)) # Make sure code doesn't break by dividing by 0
+    }
     p_select <- exp(log(trial_now) * phi * impressions) / sum(exp(log(trial_now) * phi * impressions))
     
   }
@@ -580,6 +583,8 @@ Model_Lik_Optim <- function(Q,                # Vector of parameters
   # Q[3]: curvature parameter (used in RLGoas)
   # Q[4]: lambda, loss aversion parameter (used in RLGoal)
   
+  Q <- abs(Q) # Make sure no negative values are used (although 0 is used as lower
+              # bound, optim sometimes samples negative values very close to 0)
   
   # Extract some information
   observations_n <- length(selection_v)
@@ -676,6 +681,12 @@ Model_Lik_Optim <- function(Q,                # Vector of parameters
                                     phi = phi_par, 
                                     trial_now = trial_i)
         
+        
+      }
+      
+      if (any(is.na(selprob_v)) | any(!is.finite(selprob_v)) | any(is.null(selprob_v))){
+        
+        selprob_v <- c(0.5, 0.5)
         
       }
       

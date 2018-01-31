@@ -133,7 +133,7 @@ mle_optim_cluster_fun <- function(i) {
         startp_model <- as.matrix(expand.grid(phi_par_v,     # phi for updating rule 
                                                alpha_par_v))  # RL impression uses alpha
         
-        low_model <- c(0.00000001, 0.00000001)
+        low_model <- c(0, 0)
         up_model  <- c(Inf, 1)
         
       }
@@ -145,7 +145,7 @@ mle_optim_cluster_fun <- function(i) {
                                                curvature_par_v,  # for curvature of the utility function
                                                lambda_par_v))    # loss aversion parameter
         
-        low_model <- c(0.00000001, 0.00000001, 0.00000001, 0.00000001)
+        low_model <- c(0, 0, 0, 0)
         up_model  <- c(Inf, 1, 2, Inf)
         
       }
@@ -154,7 +154,7 @@ mle_optim_cluster_fun <- function(i) {
         
         startp_model <- as.matrix(expand.grid(phi_par_v))       # phi for updating rule 
         
-        low_model <- c(0.00000001)
+        low_model <- c(0)
         up_model  <- c(Inf)
         
         }
@@ -251,7 +251,7 @@ mle_optim_cluster_fun <- function(i) {
       
       startp_model <- as.matrix(expand.grid(phi_par_v_SampEx))       # phi for updating rule 
       
-      low_model <- c(0.00000001)
+      low_model <- c(0)
       up_model  <- c(Inf)
       
       temp_fit_SampEx <- Inf
