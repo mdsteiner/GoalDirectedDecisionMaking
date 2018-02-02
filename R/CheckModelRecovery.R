@@ -9,8 +9,11 @@ library(yarrr)
 load("data/Study1Data/useData/ParameterRecoveryOptim01.RData")
 df_sim <- readRDS("data/Study1Data/useData/ModelSimDat_All.rds")
 
-df_sim_sub <- df_sim %>%
-  
+subj_fits <- subj_fits %>%
+  filter(model != "RLGoal")
+
+dat <- dat %>%
+  filter(model != "RLGoal")
 
 ####   Results for the other models
 
@@ -36,22 +39,29 @@ with(model_best, tapply(model == model_best, model_best, mean, na.rm = T))
 
 kable(with(model_best, tapply(model == model_best, model_best, mean, na.rm = T)))
 
+pdf("plot/ParameterRecovery.pdf", height = 8, width = 8)
 par(mfrow =c(2,2))
 # Impression Parameters
 plot(model_best$pars_Imp[model_best$model != "SampEx_Int_Goal"],
      model_best$model_best_Imp[model_best$model != "SampEx_Int_Goal"],
-     pch = 16, col = transparent("black",.95), main = "RL Models", xlab = "True Impression Parameter",
-     ylab = "Fitted Impression Parameter", xlim = c(0, 1), ylim = c(0, 1))
+     pch = 16, col = transparent("black",.95), main = "RL Model", xlab = "True Impression Parameter",
+     ylab = "Fitted Impression Parameter", xlim = c(0, 1), ylim = c(0, 1),
+     cex.axis = 1.2, cex.lab = 1.3)
 plot(model_best$pars_Imp[model_best$model == "SampEx_Int_Goal"],
      model_best$model_best_Imp[model_best$model == "SampEx_Int_Goal"],
      pch = 16, col = transparent("black",.95), main = "SampEx Model", xlab = "True Impression Parameter",
-     ylab = "Fitted Impression Parameter", xlim = c(0, 15), ylim = c(0,15))
+     ylab = "Fitted Impression Parameter", xlim = c(0, 15), ylim = c(0,15),
+     cex.axis = 1.2, cex.lab = 1.3)
 # Choice Parameters
 plot(model_best$pars_Choice[model_best$model != "SampEx_Int_Goal"],
      model_best$model_best_Choice[model_best$model != "SampEx_Int_Goal"],
-     pch = 16, col = transparent("black",.95), main = "RL Models", xlab = "True Choice Parameter",
-     ylab = "Fitted Choice Parameter", xlim = c(0, 5), ylim = c(0, 5))
+     pch = 16, col = transparent("black",.95), main = "RL Model", xlab = "True Choice Parameter",
+     ylab = "Fitted Choice Parameter", xlim = c(0, 5), ylim = c(0, 5),
+     cex.axis = 1.2, cex.lab = 1.3)
 plot(model_best$pars_Choice[model_best$model == "SampEx_Int_Goal"],
      model_best$model_best_Choice[model_best$model == "SampEx_Int_Goal"],
      pch = 16, col = transparent("black",.95), main = "SampEx Model", xlab = "True Choice Parameter",
-     ylab = "Fitted Choice Parameter", xlim = c(0, 2.5), ylim = c(0,2.5))
+     ylab = "Fitted Choice Parameter", xlim = c(0, 2.5), ylim = c(0,2.5),
+     cex.axis = 1.2, cex.lab = 1.3)
+
+dev.off()
