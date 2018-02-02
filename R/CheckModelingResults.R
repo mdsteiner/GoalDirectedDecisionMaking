@@ -95,7 +95,7 @@ mean(model_best$model_best_Imp[model_best$model_best == "SampEx_Int_Goal"])
 ### Summary Statistics for the different models
 
 pars_summary <- model_best %>%
-  group_by(model_best) %>%
+  group_by(model_best, goal.condition) %>%
   summarise(bic_mean = mean(model_best_bic),
             bic_sd = sd(model_best_bic),
             par_Imp_mean = mean(model_best_Imp),
@@ -108,7 +108,7 @@ kable(pars_summary)
 
 # separated for environments
 pars_summary_envs <- model_best %>%
-  group_by(model_best, variance.condition) %>%
+  group_by(model_best, variance.condition, goal.condition) %>%
   summarise(bic_mean = mean(model_best_bic),
             bic_sd = sd(model_best_bic),
             par_Imp_mean = mean(model_best_Imp),
