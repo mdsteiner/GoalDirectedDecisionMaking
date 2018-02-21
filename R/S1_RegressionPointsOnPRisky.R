@@ -265,6 +265,9 @@ ggplot(bin_df, aes(x = mean_bin, y = pRisky)) +
 # Run Regression Model
 # ----------------------
 
+# save the results to the documents folder using sink
+sink("documents/CI_RegPointsAndTrialOnPRisky.txt")
+
 # mixed effects model with random intercepts for subjects and games
 model <- glmer(high.var.chosen ~ goal.condition.bin * overGoal.f + points.cum +
                  (1|id.f/game), data = df_trial, family = "binomial")
@@ -272,14 +275,26 @@ model <- glmer(high.var.chosen ~ goal.condition.bin * overGoal.f + points.cum +
 summary(model)
 r2(model)
 
+
+
 # mixed effects model with random intercepts for subjects and games, this time with environments
+print("")
+print("mixed effects model with random intercepts for subjects and games, this time with environments")
+print("")
 model_env <- glmer(high.var.chosen ~ goal.condition.bin * overGoal.f + points.cum +
                variance.condition + (1|id.f/game), data = df_trial,
                family = "binomial")
 
 summary(model_env)
+print("")
+print("Tjur's D:")
 r2(model_env)
 
+print("")
+print("CI")
+print("")
+model_env_ci <- confint.merMod(model_env, method = "boot", parallel = "multicore")
+model_env_ci
 
 # mixed effects model with random intercepts for subjects and games, with distance from goal and trial as predictors
 model_goal_dist <- glmer(high.var.chosen ~ goal.condition.bin * goal.dist + trial +
@@ -289,13 +304,28 @@ summary(model_goal_dist)
 r2(model_goal_dist)
 
 # mixed effects model with random intercepts for subjects and games, with distance from goal and trial as predictors
+
+print("")
+print("mixed effects model with random intercepts for subjects and games, with distance from goal and trial as predictors")
+print("")
 model_goal_dist_env <- glmer(high.var.chosen ~ goal.condition.bin * goal.dist + trial +
                            variance.condition + (1|id.f/game), data = df_trial,
                          family = "binomial")
 
 summary(model_goal_dist_env)
+print("")
+print("Tjur's D:")
+print("")
 r2(model_goal_dist_env)
 
+print("")
+print("CI")
+print("")
+model_goal_dist_env_ci <- confint.merMod(model_goal_dist_env, method = "boot",
+                                         parallel = "multicore")
+model_goal_dist_env_ci
+
+sink()
 
 # Now repeat the analysis but only with the last 10 trials
 

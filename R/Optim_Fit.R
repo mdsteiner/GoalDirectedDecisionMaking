@@ -8,7 +8,7 @@ library(tidyverse)
 library(parallel)
 
 # SampExHeur Model fitting
-source("R/SampExHeurModel.R")
+source("R/modeling_functions.R")
 
 
 # ---------------------------

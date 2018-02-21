@@ -1,0 +1,203 @@
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: high.var.chosen ~ goal.condition.bin * overGoal.f + points.cum +      (1 | id.f/game)
+   Data: df_trial
+
+     AIC      BIC   logLik deviance df.resid 
+119593.8 119660.5 -59789.9 119579.8   102493 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.9857 -0.7093 -0.3653  0.8344  5.2782 
+
+Random effects:
+ Groups    Name        Variance Std.Dev.
+ game:id.f (Intercept) 1.1317   1.064   
+ id.f      (Intercept) 0.5821   0.763   
+Number of obs: 102500, groups:  game:id.f, 4100; id.f, 410
+
+Fixed effects:
+                                 Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                     -0.435913   0.058361  -7.469 8.07e-14 ***
+goal.condition.bin1              0.088794   0.084244   1.054    0.292    
+overGoal.f1                      0.232310   0.043941   5.287 1.24e-07 ***
+points.cum                      -0.002309   0.000292  -7.910 2.58e-15 ***
+goal.condition.bin1:overGoal.f1 -0.929172   0.057928 -16.040  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) gl.c.1 ovrG.1 pnts.c
+gl.cndtn.b1 -0.667                     
+overGoal.f1  0.039  0.037              
+points.cum  -0.196  0.002 -0.478       
+gl.cn.1:G.1  0.041 -0.061 -0.585  0.004
+convergence code: 0
+Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?
+
+Tjur's D: 0.2320
+[1] ""
+[1] "mixed effects model with random intercepts for subjects and games, this time with environments"
+[1] ""
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: high.var.chosen ~ goal.condition.bin * overGoal.f + points.cum +      variance.condition + (1 | id.f/game)
+   Data: df_trial
+
+     AIC      BIC   logLik deviance df.resid 
+119531.4 119617.2 -59756.7 119513.4   102491 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.9700 -0.7097 -0.3646  0.8341  5.2427 
+
+Random effects:
+ Groups    Name        Variance Std.Dev.
+ game:id.f (Intercept) 1.1309   1.0634  
+ id.f      (Intercept) 0.4735   0.6881  
+Number of obs: 102500, groups:  game:id.f, 4100; id.f, 410
+
+Fixed effects:
+                                 Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                     -0.511638   0.076579  -6.681 2.37e-11 ***
+goal.condition.bin1              0.112735   0.077683   1.451  0.14672    
+overGoal.f1                      0.231343   0.043926   5.267 1.39e-07 ***
+points.cum                      -0.002274   0.000292  -7.788 6.78e-15 ***
+variance.conditionHigh           0.488523   0.094254   5.183 2.18e-07 ***
+variance.conditionLow           -0.307820   0.094953  -3.242  0.00119 ** 
+goal.condition.bin1:overGoal.f1 -0.929173   0.057897 -16.049  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) gl.c.1 ovrG.1 pnts.c vrnc.H vrnc.L
+gl.cndtn.b1 -0.459                                   
+overGoal.f1  0.029  0.040                            
+points.cum  -0.163  0.002 -0.478                     
+vrnc.cndtnH -0.626  0.008 -0.003  0.023              
+vrnc.cndtnL -0.602 -0.031  0.005  0.011  0.498       
+gl.cn.1:G.1  0.033 -0.067 -0.584  0.004 -0.002 -0.001
+convergence code: 0
+Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?
+
+[1] ""
+[1] "Tjur's D:"
+Tjur's D: 0.2320
+[1] ""
+[1] "CI"
+[1] ""
+                                       2.5 %       97.5 %
+.sig01                           1.023028428  1.086841993
+.sig02                           0.618777991  0.743921665
+(Intercept)                     -0.645726713 -0.375147543
+goal.condition.bin1             -0.029043666  0.268711642
+overGoal.f1                      0.146997034  0.317430089
+points.cum                      -0.002857734 -0.001715826
+variance.conditionHigh           0.315619803  0.678505791
+variance.conditionLow           -0.498180726 -0.122920764
+goal.condition.bin1:overGoal.f1 -1.062598686 -0.810177501
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: high.var.chosen ~ goal.condition.bin * goal.dist + trial + (1 |      id.f/game)
+   Data: df_trial
+
+     AIC      BIC   logLik deviance df.resid 
+119240.8 119307.6 -59613.4 119226.8   102493 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.4144 -0.7054 -0.3636  0.8327  4.4107 
+
+Random effects:
+ Groups    Name        Variance Std.Dev.
+ game:id.f (Intercept) 1.1190   1.0578  
+ id.f      (Intercept) 0.5773   0.7598  
+Number of obs: 102500, groups:  game:id.f, 4100; id.f, 410
+
+Fixed effects:
+                               Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                   -0.149223   0.058494  -2.551   0.0107 *  
+goal.condition.bin1           -0.116263   0.084160  -1.381   0.1671    
+goal.dist                     -0.008800   0.001228  -7.164 7.85e-13 ***
+trial                         -0.025665   0.001019 -25.177  < 2e-16 ***
+goal.condition.bin1:goal.dist  0.025859   0.001810  14.290  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) gl.c.1 gl.dst trial 
+gl.cndtn.b1 -0.664                     
+goal.dist   -0.078  0.066              
+trial       -0.213  0.003 -0.083       
+gl.cndt.1:.  0.070 -0.101 -0.672 -0.026
+convergence code: 0
+Model failed to converge with max|grad| = 0.0012664 (tol = 0.001, component 1)
+Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?
+
+Tjur's D: 0.2343
+[1] ""
+[1] "mixed effects model with random intercepts for subjects and games, with distance from goal and trial as predictors"
+[1] ""
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: high.var.chosen ~ goal.condition.bin * goal.dist + trial + variance.condition +      (1 | id.f/game)
+   Data: df_trial
+
+     AIC      BIC   logLik deviance df.resid 
+119175.8 119261.6 -59578.9 119157.8   102491 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.4013 -0.7052 -0.3634  0.8322  4.3825 
+
+Random effects:
+ Groups    Name        Variance Std.Dev.
+ game:id.f (Intercept) 1.1183   1.0575  
+ id.f      (Intercept) 0.4655   0.6823  
+Number of obs: 102500, groups:  game:id.f, 4100; id.f, 410
+
+Fixed effects:
+                               Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                   -0.237808   0.076062  -3.127  0.00177 ** 
+goal.condition.bin1           -0.092458   0.077413  -1.194  0.23234    
+goal.dist                     -0.008893   0.001228  -7.239 4.52e-13 ***
+trial                         -0.025648   0.001019 -25.158  < 2e-16 ***
+variance.conditionHigh         0.514322   0.093528   5.499 3.82e-08 ***
+variance.conditionLow         -0.289476   0.094258  -3.071  0.00213 ** 
+goal.condition.bin1:goal.dist  0.025849   0.001809  14.291  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) gl.c.1 gl.dst trial  vrnc.H vrnc.L
+gl.cndtn.b1 -0.460                                   
+goal.dist   -0.048  0.072                            
+trial       -0.165  0.003 -0.083                     
+vrnc.cndtnH -0.620  0.007 -0.016  0.000              
+vrnc.cndtnL -0.599 -0.031 -0.012  0.003  0.498       
+gl.cndt.1:.  0.053 -0.110 -0.672 -0.026  0.000  0.001
+convergence code: 0
+Model failed to converge with max|grad| = 0.0397525 (tol = 0.001, component 1)
+Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?
+
+[1] ""
+[1] "Tjur's D:"
+[1] ""
+Tjur's D: 0.2344
+[1] ""
+[1] "CI"
+[1] ""
+                                    2.5 %       97.5 %
+.sig01                         1.01805506  1.082290828
+.sig02                         0.61065622  0.738562066
+(Intercept)                   -0.37526292 -0.073470614
+goal.condition.bin1           -0.23962294  0.061902688
+goal.dist                     -0.01140794 -0.006462508
+trial                         -0.02788297 -0.023719411
+variance.conditionHigh         0.33803728  0.676944385
+variance.conditionLow         -0.47304722 -0.103906320
+goal.condition.bin1:goal.dist  0.02209590  0.029388419
