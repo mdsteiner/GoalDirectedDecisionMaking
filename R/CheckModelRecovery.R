@@ -28,6 +28,11 @@ model_best <- subj_fits %>%
     model_best_Choice = pars_Choice_mle[bic == min(bic)][1]
   )
 
+
+
+
+
+
 # Combine actual participant conditions with best model
 
 model_best <- dat %>%
@@ -65,3 +70,81 @@ plot(model_best$pars_Choice[model_best$model == "SampEx_Int_Goal"],
      cex.axis = 1.2, cex.lab = 1.3)
 
 dev.off()
+
+
+### Check whether the SampEx model predicts higher risky rates below the goal ----
+
+# Aggregate data
+
+df_sim_participant <- df_sim %>%
+  filter(model == "SampEx_Int_Goal") %>%
+  mutate(State = case_when(points.cum >= 100 ~ "Above",
+                              TRUE ~ "Below"),
+         Environment = variance_condition) %>%
+  group_by(id, Environment, State) %>%
+  summarise(
+    Risky = mean(selection == 2)
+  )
+  
+
+
+pdf("plot/pRiskyAboveUnderGoalOnlyGoal_SimSampEx.pdf", width = 12.5, height = 5.5)
+par(mar=c(5,8.5,3,1.5), mfrow = c(1, 1))
+yarrr::pirateplot(Risky ~ State + Environment, data = df_sim_participant,
+                  ylab = "Likelihood Risky", xlab = "Conditions", main = "Simulation SampEx Model",
+                  bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+
+dev.off()
+
+
+### Check the goal reached rates of the models-------
+
+df_sim_participant <- df_sim %>%
+  filter(trial == 25, model != "RLGoal") %>%
+  mutate(Environment = variance_condition,
+         Model = case_when(model == "NaturalMean" ~ "Natural Mean",
+                           model == "Random" ~ "Random",
+                           model == "RL" ~ "RL",
+                           TRUE ~ "SampEx")) %>%
+  group_by(id, Environment, game, Model) %>%
+  summarise(
+    goal_reached = case_when(points.cum >= 100 ~ 1,
+                             TRUE ~ 0)
+  ) %>%
+  group_by(id, Environment, Model) %>%
+  summarise(
+    goal_reached_rate = sum(goal_reached) / 10
+  ) #%>%
+  # group_by(model, Environment)  %>%
+  # summarise(
+  #   goal_reached_rate = mean(n_goals_reached) / 10
+  # )
+
+pdf("plot/likelihoodGoalReached_ModelSim.pdf", width = 12.5, height = 12)
+par(mar=c(5,8.5,3,1.5), mfrow = c(3, 1))
+yarrr::pirateplot(goal_reached_rate ~ Model, data = subset(df_sim_participant, Environment == "High"),
+                  ylab = "Likelihood Reach Goal", xlab = "Model", main = "High Environment",
+                  bean.f.col = c("lightgray"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+yarrr::pirateplot(goal_reached_rate ~ Model, data = subset(df_sim_participant, Environment == "Equal"),
+                  ylab = "Likelihood Reach Goal", xlab = "Model", main = "Equal Environment",
+                  bean.f.col = c("lightgray"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+yarrr::pirateplot(goal_reached_rate ~ Model, data = subset(df_sim_participant, Environment == "Low"),
+                  ylab = "Likelihood Reach Goal", xlab = "Model", main = "Low Environment",
+                  bean.f.col = c("lightgray"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+
+dev.off()
+
+
+pirateplot(goal_reached_rate ~ model, data = subset(df_sim_participant, Environment == "Low"),
+           ylim = c(0,1))
+pirateplot(goal_reached_rate ~ model, data = subset(df_sim_participant, Environment == "Equal"),
+           ylim = c(0,1))
+
+pirateplot(goal_reached_rate ~ model, data = subset(df_sim_participant, Environment == "High"),
+           ylim = c(0,1))
+
+

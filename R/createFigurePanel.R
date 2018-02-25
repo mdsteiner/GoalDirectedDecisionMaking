@@ -7,6 +7,7 @@ if (!require(tidyverse)) install.packages("tidyverse"); library(tidyverse)
 
 df_trial <- readRDS("data/Study1Data/useData/S1_dataTrialLevel.rds")
 df_participant <- readRDS("data/Study1Data/useData/S1_dataParticipantLevel.rds")
+df_participant_sim <- readRDS("data/SimulationData/useData/S1_dataParticipantLevel.rds")
 
 
 ## Create figure panel
@@ -23,12 +24,29 @@ temp_df <- data.frame("State" = rep(c("Below", "Above"),
 pdf("plot/pRiskyAboveUnderGoalOnlyGoal.pdf", width = 12.5, height = 5.5)
 par(mar=c(5,8.5,3,1.5), mfrow = c(1, 1))
 yarrr::pirateplot(Risky ~ State + Environment, data = temp_df,
-                  ylab = "p Risky chosen", xlab = "Conditions", main = "",
+                  ylab = "Likelihood Risky", xlab = "Conditions", main = "Experiment Data",
                   bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
                   cex.axis = 1.3, cex.names = 1.3)
 
 dev.off()
 
+### Plot Risky goal vs no goal, under and above goal for SIMULATION DATA ------------------------
+
+df_temp <- subset(df_participant_sim, goal.condition == "Goal")
+names(df_temp)[4] <- c("Variance Condition")
+temp_df <- data.frame("State" = rep(c("Below", "Above"),
+                                    each = nrow(df_temp)),
+                      "Environment" = rep(df_temp$`Variance Condition`, 2),
+                      "Risky" = c(df_temp$risky.ug, df_temp$risky.ag))
+
+pdf("plot/pRiskyAboveUnderGoalOnlyGoal_SimDat.pdf", width = 12.5, height = 5.5)
+par(mar=c(5,8.5,3,1.5), mfrow = c(1, 1))
+yarrr::pirateplot(Risky ~ State + Environment, data = temp_df,
+                  ylab = "Likelihood Risky", xlab = "Conditions", main = "Preregistered Simulation Data",
+                  bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+
+dev.off()
 
 
 rm(list = ls())
