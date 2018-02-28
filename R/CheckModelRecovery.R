@@ -76,24 +76,48 @@ dev.off()
 
 # Aggregate data
 
+
+pdf("plot/pRiskyAboveUnderGoalOnlyGoal_SimSampEx.pdf", width = 12.5, height = 5.5)
+par(mar=c(5,8.5,3,1.5), mfrow = c(1, 1))
+
 df_sim_participant <- df_sim %>%
   filter(model == "SampEx_Int_Goal") %>%
   mutate(State = case_when(points.cum >= 100 ~ "Above",
-                              TRUE ~ "Below"),
-         Environment = variance_condition) %>%
+                           TRUE ~ "Below"),
+         State = factor(State, levels = c("Below", "Above")),
+         Environment = factor(variance_condition, levels = c("Low", "Equal", "High"))) %>%
   group_by(id, Environment, State) %>%
   summarise(
     Risky = mean(selection == 2)
   )
-  
-
-
-pdf("plot/pRiskyAboveUnderGoalOnlyGoal_SimSampEx.pdf", width = 12.5, height = 5.5)
-par(mar=c(5,8.5,3,1.5), mfrow = c(1, 1))
 yarrr::pirateplot(Risky ~ State + Environment, data = df_sim_participant,
                   ylab = "Likelihood Risky", xlab = "Conditions", main = "Simulation SampEx Model",
                   bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
                   cex.axis = 1.3, cex.names = 1.3)
+
+dev.off()
+
+
+df_sim_participant <- df_sim %>%
+  filter(model == "RL") %>%
+  mutate(State = case_when(points.cum >= 100 ~ "Above",
+                           TRUE ~ "Below"),
+         State = factor(State, levels = c("Below", "Above")),
+         Environment = factor(variance_condition, levels = c("Low", "Equal", "High"))) %>%
+  group_by(id, Environment, State) %>%
+  summarise(
+    Risky = mean(selection == 2)
+  )
+
+
+
+pdf("plot/pRiskyAboveUnderGoalOnlyGoal_SimRL.pdf", width = 12.5, height = 5.5)
+par(mar=c(5,8.5,3,1.5), mfrow = c(1, 1))
+yarrr::pirateplot(Risky ~ State + Environment, data = df_sim_participant,
+                  ylab = "Likelihood Risky", xlab = "Conditions", main = "Simulation RL Model",
+                  bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3, sortx = "sequential")
+
 
 dev.off()
 

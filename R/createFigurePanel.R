@@ -12,24 +12,47 @@ df_participant_sim <- readRDS("data/SimulationData/useData/S1_dataParticipantLev
 
 ## Create figure panel
 
-### Plot Risky goal vs no goal, under and above goal ------------------------
+### Plot Risky goal, under and above goal ------------------------
 
 df_temp <- subset(df_participant, goal.condition == "Goal")
 names(df_temp)[4] <- c("Variance Condition")
-temp_df <- data.frame("State" = rep(c("Below", "Above"),
-                                    each = nrow(df_temp)),
-                      "Environment" = rep(df_temp$`Variance Condition`, 2),
+temp_df <- data.frame("State" = factor(rep(c("Below", "Above"),
+                                    each = nrow(df_temp))),
+                      "Environment" = factor(rep(df_temp$`Variance Condition`, 2), levels = c("Low", "Equal", "High")),
                       "Risky" = c(df_temp$risky.ug, df_temp$risky.ag))
 
 pdf("plot/pRiskyAboveUnderGoalOnlyGoal.pdf", width = 12.5, height = 5.5)
 par(mar=c(5,8.5,3,1.5), mfrow = c(1, 1))
 yarrr::pirateplot(Risky ~ State + Environment, data = temp_df,
-                  ylab = "Likelihood Risky", xlab = "Conditions", main = "Experiment Data",
+                  ylab = "Likelihood Risky", xlab = "Conditions", main = "",
+                  bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3, sortx = "sequential")
+
+dev.off()
+
+### Plot Risky goal vs no goal, under and above goal ------------------------
+
+df_temp <- df_participant
+names(df_temp)[4] <- c("Variance Condition")
+temp_df <- data.frame("State" = factor(rep(c("Below", "Above"),
+                                    each = nrow(df_temp)), levels = c("Below", "Above")),
+                      "Environment" = factor(rep(df_temp$`Variance Condition`, 2),
+                                             levels = c("Low", "Equal", "High")),
+                      "Risky" = c(df_temp$risky.ug, df_temp$risky.ag),
+                      "Goal" = rep(df_temp$goal.condition, 2))
+
+pdf("plot/pRiskyAboveUnderGoal.pdf", width = 12.5, height = 10.5)
+par(mar=c(5,8.5,3,1.5), mfrow = c(2, 1))
+yarrr::pirateplot(Risky ~ State + Environment, data = subset(temp_df, Goal == "Goal"),
+                  ylab = "Likelihood Risky", xlab = "Conditions", main = "Goal Condition",
+                  bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+yarrr::pirateplot(Risky ~ State + Environment, data = subset(temp_df, Goal != "Goal"),
+                  ylab = "Likelihood Risky", xlab = "Conditions", main = "No Goal Condition",
                   bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
                   cex.axis = 1.3, cex.names = 1.3)
 
 dev.off()
-
 ### Plot Risky goal vs no goal, under and above goal for SIMULATION DATA ------------------------
 
 df_temp <- subset(df_participant_sim, goal.condition == "Goal")
@@ -44,9 +67,10 @@ par(mar=c(5,8.5,3,1.5), mfrow = c(1, 1))
 yarrr::pirateplot(Risky ~ State + Environment, data = temp_df,
                   ylab = "Likelihood Risky", xlab = "Conditions", main = "Preregistered Simulation Data",
                   bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
-                  cex.axis = 1.3, cex.names = 1.3)
+                  cex.axis = 1.3, cex.names = 1.3, sortx = "sequential")
 
 dev.off()
+
 
 
 rm(list = ls())
