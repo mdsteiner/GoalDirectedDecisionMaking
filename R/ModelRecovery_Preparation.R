@@ -8,7 +8,7 @@ gc()
 library(tidyverse)
 
 # Read learning functions
-source("r/SampExHeurModel.R")
+source("r/modeling_functions.R")
 
 subjects <- 300
 games <- 10

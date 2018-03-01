@@ -1,3 +1,6 @@
+rm(list = ls())
+gc()
+
 # Plots for EE-Goals Paper
 
 if (!require(yarrr)) install.packages("yarrr"); library(yarrr)
@@ -8,6 +11,7 @@ if (!require(tidyverse)) install.packages("tidyverse"); library(tidyverse)
 df_trial <- readRDS("data/Study1Data/useData/S1_dataTrialLevel.rds")
 df_participant <- readRDS("data/Study1Data/useData/S1_dataParticipantLevel.rds")
 df_participant_sim <- readRDS("data/SimulationData/useData/S1_dataParticipantLevel.rds")
+df_simPar <- readRDS("data/Study1Data/useData/ParticipantParsSimDat.rds")
 
 
 ## Create figure panel
@@ -68,6 +72,36 @@ yarrr::pirateplot(Risky ~ State + Environment, data = temp_df,
                   ylab = "Likelihood Risky", xlab = "Conditions", main = "Preregistered Simulation Data",
                   bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
                   cex.axis = 1.3, cex.names = 1.3, sortx = "sequential")
+
+dev.off()
+
+### Plots from data simulated by participant parameters ----------
+
+df_sim_participant <- df_simPar %>%
+  mutate(State = case_when(points.cum >= 100 ~ "Above",
+                           TRUE ~ "Below"),
+         State = factor(State, levels = c("Below", "Above")),
+         Environment = factor(variance_condition, levels = c("Low", "Equal", "High"))) %>%
+  group_by(id, Environment, State, goal_condition, model) %>%
+  summarise(
+    Risky = mean(selection == 2)
+  )
+
+
+
+pdf("plot/pRiskyAboveUnderGoal_SimPartPars.pdf", width = 12.5, height = 10.5)
+par(mar=c(5,8.5,3,1.5), mfrow = c(2, 1))
+yarrr::pirateplot(Risky ~ State + Environment, data = subset(df_sim_participant,
+                                                             goal_condition == "Goal"),
+                  ylab = "Likelihood Risky", xlab = "Conditions", main = "Goal Condition",
+                  bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+yarrr::pirateplot(Risky ~ State + Environment, data = subset(df_sim_participant,
+                                                             goal_condition == "NoGoal"),
+                  ylab = "Likelihood Risky", xlab = "Conditions", main = "No Goal Condition",
+                  bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
+                  cex.axis = 1.3, cex.names = 1.3)
+
 
 dev.off()
 
