@@ -38,23 +38,34 @@ dev.off()
 
 df_temp <- df_participant
 names(df_temp)[4] <- c("Variance Condition")
-temp_df <- data.frame("State" = factor(rep(c("Below", "Above"),
-                                    each = nrow(df_temp)), levels = c("Below", "Above")),
+
+df_temp$`Variance Condition` <- paste(df_temp$`Variance Condition`, "Expected Return")
+
+temp_df <- data.frame("State" = factor(rep(c("Below Goal", "Above Goal"),
+                                    each = nrow(df_temp)),
+                                    levels = c("Below Goal", "Above Goal")),
                       "Environment" = factor(rep(df_temp$`Variance Condition`, 2),
-                                             levels = c("Low", "Equal", "High")),
+                                             levels = c("Low Expected Return",
+                                                        "Equal Expected Return",
+                                                        "High Expected Return")),
                       "Risky" = c(df_temp$risky.ug, df_temp$risky.ag),
                       "Goal" = rep(df_temp$goal.condition, 2))
 
-pdf("plot/pRiskyAboveUnderGoal.pdf", width = 12.5, height = 10.5)
-par(mar=c(5,8.5,3,1.5), mfrow = c(2, 1))
-yarrr::pirateplot(Risky ~ State + Environment, data = subset(temp_df, Goal == "Goal"),
-                  ylab = "Likelihood Risky", xlab = "Conditions", main = "Goal Condition",
+names(temp_df)[2] <- "Risky Option"
+
+pdf("plot/pRiskyAboveUnderGoal.pdf", width = 13.5, height = 8)
+par(mar=c(4.25,6.5,3,0.4), mfrow = c(2, 1))
+yarrr::pirateplot(Risky ~ State + `Risky Option`, data = subset(temp_df, Goal == "Goal"),
+                  ylab = "Proportion Risky Choices", xlab = "Conditions", main = "",
                   bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
                   cex.axis = 1.3, cex.names = 1.3)
-yarrr::pirateplot(Risky ~ State + Environment, data = subset(temp_df, Goal != "Goal"),
-                  ylab = "Likelihood Risky", xlab = "Conditions", main = "No Goal Condition",
+mtext("Goal Condition", line = -1.9, cex = 1.3, font = 2, adj = 1, side = 2, las = 1, padj = -9.5)
+
+yarrr::pirateplot(Risky ~ State + `Risky Option`, data = subset(temp_df, Goal != "Goal"),
+                  ylab = "Proportion Risky Choices", xlab = "Conditions", main = "",
                   bean.f.col = c("lightgray", "black"), ylim = c(0, 1), cex.lab = 1.3,
                   cex.axis = 1.3, cex.names = 1.3)
+mtext("No-Goal Condition", line = -4, cex = 1.3, font = 2, adj = 1, side = 2, las = 1, padj = -9.5)
 
 dev.off()
 ### Plot Risky goal vs no goal, under and above goal for SIMULATION DATA ------------------------
@@ -220,29 +231,34 @@ for (sub in 2:length(unique(df_trial$id))){
   
 }
 
+bin_df$variance.condition <- factor(bin_df$variance.condition, levels = c("Low", "Equal", "High"))
+
 pdf("plot/pRiskyByPointsSepEnvs.pdf", width = 12.5, height = 5.5)
 # separate for environments
 temp_col <- piratepal("basel")
 
-cols <- c("Goal" = temp_col[[1]],
-          "NoGoal" = temp_col[[2]])
+cols <- c("Goal" = transparent(temp_col[[1]], .2),
+          "NoGoal" = transparent(temp_col[[2]], .2))
+
 
 ggplot(bin_df, aes(x = mean_bin, y = pRisky)) + 
   geom_line(data = filter(bin_df, goal.condition == "Goal"),
             aes(group=id), col = temp_col[[1]], lwd = .3, alpha = 0.1) +
   geom_line(data = filter(bin_df, goal.condition == "NoGoal"),
             aes(group=id), col = temp_col[[2]], lwd = .3, alpha = 0.1) +
-  stat_smooth(data = filter(bin_df, goal.condition == "Goal"),
-              aes(col = "Goal"), se = FALSE, method ="loess", lwd = 1.5) +
-  stat_smooth(data = filter(bin_df, goal.condition == "NoGoal"),
-              aes(col = "NoGoal"), se = FALSE, method = "loess", lwd = 1.5) +
-  scale_colour_manual(name="Goal Conditions",values=cols) +
-  ylim(0,1) + xlim(-25, 150) +
-  ylab("Likelihood Risky") + xlab("Points") +
+  geom_smooth(data = filter(bin_df, goal.condition == "Goal"),
+              aes(col = "Goal"), se = TRUE, method ="loess", lwd = 1.5) +
+  geom_smooth(data = filter(bin_df, goal.condition == "NoGoal"),
+              aes(col = "NoGoal"), se = TRUE, method = "loess", lwd = 1.5) +
+  scale_colour_manual(name="Goal Conditions",values = cols) +
+  geom_vline(xintercept = 100, lty = 2, col = "darkgray", lwd = .9) +
+  ylim(0,1) + xlim(-14, 130) +
+  ylab("Proportion Risky Choices") + xlab("Total Points") +
   facet_wrap(~ variance.condition) +
   theme_bw() +
-  theme(axis.title.x = element_text(size = 15, vjust=-.2)) +
-  theme(axis.title.y = element_text(size = 15, vjust=0.3))
+  theme(axis.title.x = element_text(size = 15, vjust=-.2),
+        axis.title.y = element_text(size = 15, vjust=0.3),
+        strip.text.x = element_text(face = "bold"))
 dev.off()
 
 # ------------
@@ -296,18 +312,18 @@ ggplot(bin_df, aes(x = mean_bin, y = pRisky)) +
   geom_line(data = filter(bin_df, goal.condition == "Goal" &
                             variance.condition == "Low"),
             aes(group=id), col = temp_col[[5]], lwd = .3, alpha = 0.1) +
-  stat_smooth(data = filter(bin_df, goal.condition == "Goal" &
+  geom_smooth(data = filter(bin_df, goal.condition == "Goal" &
                               variance.condition == "Equal"),
-              aes(col = "Equal"), se = FALSE, method ="loess", lwd = 1.5) +
-  stat_smooth(data = filter(bin_df, goal.condition == "Goal" &
+              aes(x = mean_bin, y = pRisky, col = "Equal"), se = FALSE, method ="loess", lwd = 1.5) +
+  geom_smooth(data = filter(bin_df, goal.condition == "Goal" &
                               variance.condition == "High"),
-              aes(col = "High"), se = FALSE, method ="loess", lwd = 1.5) +
-  stat_smooth(data = filter(bin_df, goal.condition == "Goal" &
+              aes(x = mean_bin, y = pRisky, col = "High"), se = FALSE, method ="loess", lwd = 1.5) +
+  geom_smooth(data = filter(bin_df, goal.condition == "Goal" &
                               variance.condition == "Low"),
-              aes(col = "Low"), se = FALSE, method ="loess", lwd = 1.5) +
+              aes(x = mean_bin, y = pRisky, col = "Low"), se = FALSE, method ="loess", lwd = 1.5) +
   scale_colour_manual(name="Environments",values=cols) +
   ylim(0,1) + xlim(-15, 15) +
-  ylab("Likelihood Risky") + xlab("Points Needed Per Trial") +
+  ylab("Proportion Risky Chosen") + xlab("Average Points Needed Per Trial") +
   theme_bw() +
   theme(axis.title.x = element_text(size = 15, vjust=-.2)) +
   theme(axis.title.y = element_text(size = 15, vjust=0.3))

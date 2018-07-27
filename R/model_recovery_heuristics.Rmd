@@ -1,0 +1,372 @@
+---
+title: "Model Recovery Heuristics"
+author: "Markus Steiner"
+date: "17 7 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(knitr)
+library(yarrr)
+
+```
+
+
+In the model recovery we simulated data of 50 participants x 3 environments for a total of 7 models. The seven models, together with a short description can be found in the Table below. These data were then used to recover the parameters. Here is a table of the percent correct recoveries:
+
+
+|   Model       | N Parameters  |  Description |
+|:------------|----|--------------------------------------------------------------------------------|
+|GoalHeur      | 1   | The goal heuristic checks whether the outcome of the last trial was at least as high as needed to reach the goal on average and if so, choose this option with a probability of epsilon. If it was lower than the number of points needed per trial, choose the other option with a probability of epsilon. Uses an e-greedy choice rule. |
+|NaturalMean   | 1  | This model takes the mean of all samples drawn from an option and plugs these values into a softmax. |
+|Random        |  0 | Chooses each option with the same probability |
+|RL            | 2  | Standard reinforcement learning model to update the options' values. Uses a softmax. |
+|RLGoal        |  2  | This is a reinforcement learning model that doesn't take the options' values as input, but the difference from the current outcome and the number of points needed per trial to reach the goal. Uses a softmax. |
+|SampEx_Heur_Goal |  2  | This model takes the last N samples from memory (with N being a free parameter) and uses the proportion of samples at least as large as the number of points needed per trial as value to put into the softmax. |
+|ThreshHeur     | 2 | Uses a threshhold as free parameter. If the current number of points needed per trial lies above this threshhold, chooses the high variance option (with an uncorrected variance) with probability epsilon, and if the number of points needed per trial lies below the threshold chooses the option with the lower variance with probability epsilon. Uses an e-greedy choice rule.|
+
+Table: Fitted models with description
+
+
+Let's first look at the model fitting results of the actual choice data from the experiment.
+
+```{r}
+load("../data/Study1Data/useData/ModelFitOptim04.RData")
+df.participant <- readRDS("../data/Study1Data/useData/S1_dataParticipantLevel.rds")
+
+# Get the best model for each subject
+model_best <- subj_fits %>%
+  group_by(id) %>%
+  summarise(
+    N_models = sum(bic == min(bic)),       # Number of best fitting models (hopefully 1)
+    model_best = model[bic == min(bic)][1],
+    model_best_bic = bic[bic == min(bic)][1],
+    model_best_Imp = pars_Imp_mle[bic == min(bic)][1],
+    model_best_Choice = pars_Choice_mle[bic == min(bic)][1]
+  )
+
+# Combine actual participant conditions with best model
+
+model_best <- dat %>%
+  group_by(id) %>%
+  summarise(
+    goal.condition = goal.condition[1],
+    condition = condition[1]
+  ) %>%
+  ungroup() %>%
+  left_join(model_best)   # Add modelling results
+
+
+model_best <- model_best %>%
+  left_join(df.participant[c("id", "variance.condition")], by = "id")
+ 
+
+# Table of results
+kable(round(prop.table(table(model_best$model_best, model_best$goal.condition), 2), 3), caption = "Proportion of persons per condition that are best described by a certain model.")
+
+
+```
+
+
+This results show that the models that incorporate a goal are better in fitting participants from the goal condition. However, the evidence is not very strong in the sense that around 40% of participants from the goal condition are best classified by a model that does not incorporate a goal. 
+
+Let's see how this looks if we split the table in the three different conditions.
+
+```{r eval=FALSE}
+# Table of results
+var_cond <- c("Low", "Equal", "High")
+
+
+for (i in var_cond){
+  print(paste0(i, " Condition:"))
+  print(
+    kable(round(
+      prop.table(table(model_best$model_best[model_best$variance.condition == i],
+                     model_best$goal.condition[model_best$variance.condition == i]), 2),
+      3))
+  )
+  cat("\n\n\n")
+}
+
+```
+
+
+
+
+|                 |  Goal| NoGoal|
+|:----------------|-----:|------:|
+|GoalHeur         | 0.348|  0.377|
+|NaturalMean      | 0.121|  0.217|
+|Random           | 0.015|  0.014|
+|RL               | 0.333|  0.304|
+|RLGoal           | 0.015|  0.000|
+|SampEx_Heur_Goal | 0.045|  0.014|
+|ThreshHeur       | 0.121|  0.072|
+
+Table: Low Condition:
+
+
+
+
+|                 |  Goal| NoGoal|
+|:----------------|-----:|------:|
+|GoalHeur         | 0.387|  0.333|
+|NaturalMean      | 0.065|  0.173|
+|Random           | 0.048|  0.000|
+|RL               | 0.194|  0.373|
+|SampEx_Heur_Goal | 0.032|  0.040|
+|ThreshHeur       | 0.274|  0.080|
+
+Table: Equal Condition:
+
+
+
+|                 |  Goal| NoGoal|
+|:----------------|-----:|------:|
+|GoalHeur         | 0.164|  0.169|
+|NaturalMean      | 0.098|  0.143|
+|Random           | 0.098|  0.117|
+|RL               | 0.328|  0.377|
+|SampEx_Heur_Goal | 0.000|  0.078|
+|ThreshHeur       | 0.311|  0.117|
+
+Table: High Condition:
+
+
+Here's an overview of the models and the fitted parameter values separated for conditions.
+
+```{r}
+# separated for environments
+pars_summary_envs <- model_best %>%
+  group_by(model_best, variance.condition, goal.condition) %>%
+  summarise(bic_mean = mean(model_best_bic),
+            bic_sd = sd(model_best_bic),
+            par_Imp_mean = mean(model_best_Imp),
+            par_Imp_sd = sd(model_best_Imp),
+            par_Choice_mean = mean(model_best_Choice),
+            par_Choice_sd = sd(model_best_Choice),
+            N = n())
+
+kable(pars_summary_envs)
+```
+
+
+## Model Recovery
+
+So far so good. Now let's check whether with the new models the model recovery was more successfull. Below is a table with the proportion of recoveries. It shows that the models were all relatively well recovered, with a correct recovery rate of over $.94$.
+
+```{r echo = FALSE}
+load("../data/Study1Data/useData/ParameterRecoveryOptim02.RData")
+df_sim <- readRDS("../data/Study1Data/useData/ModelSimDat_All.rds")
+
+
+####   Results for the other models
+
+# Get the best model for each subject
+model_best <- subj_fits %>%
+  group_by(id) %>%
+  summarise(
+    N_models = sum(bic == min(bic)),       # Number of best fitting models (hopefully 1)
+    model_best = model[bic == min(bic)][1],
+    model_best_bic = bic[bic == min(bic)][1],
+    model_best_Imp = pars_Imp_mle[bic == min(bic)][1],
+    model_best_Choice = pars_Choice_mle[bic == min(bic)][1]
+  )
+
+
+# Combine actual participant conditions with best model
+
+model_best <- dat %>%
+  left_join(model_best)   # Add modelling results
+
+datn <- model_best %>%
+  group_by(id) %>%
+  summarise(
+    pars_Choice = pars_Choice[1],
+    pars_Imp = pars_Imp[1],
+    model_best_Imp = model_best_Imp[1],
+    model_best_Choice = model_best_Choice[1],
+    model = model[1],
+    model_best = model_best[1]
+  )
+
+model_best$corr_class <- as.numeric(model_best$model == model_best$model_best)
+
+model_best <- model_best[order(model_best$id),]
+datn <- datn[order(datn$id),]
+subj_fits <- subj_fits[order(subj_fits$id),]
+
+
+models <- c("Random", "RL", "GoalHeur", "ThreshHeur", "RLGoal", "SampEx_Heur_Goal", "NaturalMean")
+
+mat <- matrix(NA, ncol = 7, nrow = 7)
+for (ii in seq_along(models)){
+  temp_models <- model_best %>%
+    filter(model == models[ii])
+  for (jj in seq_along(models)){
+    mat[ii, jj] <- round(mean(model_best$model == models[ii] & model_best$model_best == models[jj]) * 7, 2)
+  }
+}
+
+
+rownames(mat) <- models
+colnames(mat) <- models
+
+kable(mat)
+```
+
+
+Now let's look at some plots of true and recovered parameters for the different models.
+
+### Reinforcement Learning model
+
+```{r}
+check_ids3 <- unique(model_best$id[model_best$model == "RL" & model_best$model_best == "RL"])
+par(mfrow = c(1, 2))
+plot(datn$pars_Imp[datn$id %in% check_ids3 & datn$model == "RL"],
+     subj_fits$pars_Imp_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "RL"],
+     main = "RL Model - Imp Parameter",
+     xlab = "True Alpha-Parameter Value",
+     ylab = "Recovered Alpha-Parameter Value",
+     pch = 16,
+     ylim = c(0, 1),
+     xlim = c(0, 1))
+abline(0, 1, lty = 2)
+
+plot(datn$pars_Choice[datn$id %in% check_ids3 & datn$model == "RL"],
+     subj_fits$pars_Choice_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "RL"],
+     main = "RL Model - Choice Parameter",
+     xlab = "True Phi-Parameter Value",
+     ylab = "Recovered Phi-Parameter Value",
+     pch = 16,
+     ylim = c(0, 6),
+     xlim = c(0, 6))
+abline(0, 1, lty = 2)
+
+```
+
+
+
+### RLGoal Model
+
+```{r}
+check_ids3 <- unique(model_best$id[model_best$model == "RLGoal" & model_best$model_best == "RLGoal"])
+par(mfrow = c(1, 2))
+plot(datn$pars_Imp[datn$id %in% check_ids3 & datn$model == "RLGoal"],
+     subj_fits$pars_Imp_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "RLGoal"],
+     main = "RLGoal Model - Imp Parameter",
+     xlab = "True Alpha-Parameter Value",
+     ylab = "Recovered Alpha-Parameter Value",
+     pch = 16,
+     ylim = c(0, 1),
+     xlim = c(0, 1))
+abline(0, 1, lty = 2)
+
+plot(datn$pars_Choice[datn$id %in% check_ids3 & datn$model == "RLGoal"],
+     subj_fits$pars_Choice_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "RLGoal"],
+     main = "RLGoal Model - Choice Parameter",
+     xlab = "True Phi-Parameter Value",
+     ylab = "Recovered Phi-Parameter Value",
+     pch = 16,
+     ylim = c(0, 6),
+     xlim = c(0, 6))
+abline(0, 1, lty = 2)
+
+```
+
+
+### GoalHeur Model
+
+```{r}
+check_ids3 <- unique(model_best$id[model_best$model == "GoalHeur" & model_best$model_best == "GoalHeur"])
+par(mfrow = c(1,1))
+
+plot(datn$pars_Choice[datn$id %in% check_ids3 & datn$model == "GoalHeur"],
+     subj_fits$pars_Choice_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "GoalHeur"],
+     main = "GoalHeur Model - Choice Parameter",
+     xlab = "True Epsilon-Parameter Value",
+     ylab = "Recovered Epsilon-Parameter Value",
+     pch = 16,
+     ylim = c(0, 1),
+     xlim = c(0, 1))
+abline(0, 1, lty = 2)
+
+```
+
+
+### ThreshHeur Model
+
+```{r}
+check_ids3 <- unique(model_best$id[model_best$model == "ThreshHeur" & model_best$model_best == "ThreshHeur"])
+par(mfrow = c(1, 2))
+plot(datn$pars_Imp[datn$id %in% check_ids3 & datn$model == "ThreshHeur"],
+     subj_fits$pars_Imp_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "ThreshHeur"],
+     main = "ThreshHeur Model - Imp Parameter",
+     xlab = "True Threshold-Parameter Value",
+     ylab = "Recovered Alpha-Parameter Value",
+     pch = 16,
+     ylim = c(0, 20),
+     xlim = c(0, 20))
+abline(0, 1, lty = 2)
+
+plot(datn$pars_Choice[datn$id %in% check_ids3 & datn$model == "ThreshHeur"],
+     subj_fits$pars_Choice_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "ThreshHeur"],
+     main = "ThreshHeur Model - Choice Parameter",
+     xlab = "True Epsiloon-Parameter Value",
+     ylab = "Recovered Epsilon-Parameter Value",
+     pch = 16,
+     ylim = c(0, 1),
+     xlim = c(0, 1))
+abline(0, 1, lty = 2)
+
+```
+
+
+### SampEx Heur Model
+
+```{r}
+check_ids3 <- unique(model_best$id[model_best$model == "SampEx_Heur_Goal" & model_best$model_best == "SampEx_Heur_Goal"])
+par(mfrow = c(1, 2))
+plot(datn$pars_Imp[datn$id %in% check_ids3 & datn$model == "SampEx_Heur_Goal"],
+     subj_fits$pars_Imp_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "SampEx_Heur_Goal"],
+     main = "SampEx_Heur_Goal Model - Imp Parameter",
+     xlab = "True N-Parameter Value",
+     ylab = "Recovered N-Parameter Value",
+     pch = 16,
+     ylim = c(0, 15),
+     xlim = c(0, 15))
+abline(0, 1, lty = 2)
+
+plot(datn$pars_Choice[datn$id %in% check_ids3 & datn$model == "SampEx_Heur_Goal"],
+     subj_fits$pars_Choice_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "SampEx_Heur_Goal"],
+     main = "SampEx_Heur_Goal Model - Choice Parameter",
+     xlab = "True Phi-Parameter Value",
+     ylab = "Recovered Phi-Parameter Value",
+     pch = 16,
+     ylim = c(0, 6),
+     xlim = c(0, 6))
+abline(0, 1, lty = 2)
+
+```
+
+
+### Natural Mean model
+
+```{r}
+check_ids3 <- unique(model_best$id[model_best$model == "NaturalMean" & model_best$model_best == "NaturalMean"])
+par(mfrow = c(1, 1))
+
+
+plot(datn$pars_Choice[datn$id %in% check_ids3 & datn$model == "NaturalMean"],
+     subj_fits$pars_Choice_mle[subj_fits$id %in% check_ids3 & subj_fits$model == "NaturalMean"],
+     main = "NaturalMean Model - Choice Parameter",
+     xlab = "True Phi-Parameter Value",
+     ylab = "Recovered Phi-Parameter Value",
+     pch = 16,
+     ylim = c(0, 6),
+     xlim = c(0, 6))
+abline(0, 1, lty = 2)
+
+```

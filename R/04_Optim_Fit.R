@@ -4,7 +4,7 @@ rm(list = ls())
 gc()
 
 # Load libraries
-library(tidyverse)
+library(dplyr)
 library(parallel)
 
 # SampExHeur Model fitting
@@ -65,25 +65,27 @@ Goal <- 100
 N_par <- 15                      # N paramter for SampEx Impression
 alpha_par_v <- seq(0.1, 0.9, .3)         # Alpha parameter for reinforcement learning Impression
 phi_par_v <- seq(0.3, 2.7, .7)         # Phi parameter for softmax choice
+epsilon_par_v <- seq(0.1, 0.9, .25)   # epsilon parameter for epsilon greedy choice rule
 phi_par_v_SampEx <- seq(0.0, 1.5, .3)
-curvature_par_v <- c(0.2, 0.5, 0.9)  # curvature parameter utility function RLGoal Impression
-lambda_par_v <- c(1, 1.5, 2.25) # loss aversion parameter utility function RLGoal Impression
+threshold_par_v <- seq(0.0, 20, 2)
 
 # Vector of all models to fit to each participant
-models_to_fit <- c(#"SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
+models_to_fit <- c("SampEx_Heur_Goal",    # Sample extrapolation with Heuristic and Goal
   #"SampEx_Heur_NoGoal",  # Sample extrapolation with Heuristic and NoGoal
   "NaturalMean",         # Natural Mean Model
-  "SampEx_Int_Goal",     # Sample extrapolation with Integration and Goal
+#  "SampEx_Int_Goal",     # Sample extrapolation with Integration and Goal
   "RL",                  # Reinforcement learning
   "RLGoal",              # Reinforcement learning target/ goal model
-  "Random")              # Random choice
+  "Random",              # Random choice
+  "GoalHeur",            # Goal heuristic with e greedy
+  "ThreshHeur")          # Threshold heuristic with e greedy
 
 # model_lu: Shows the impression and choice rules for each model
 model_lu <- tibble(
-  model = c("NaturalMean", "SampEx_Int_Goal", "RL", "RLGoal", "Random"), # "SampEx_Heur_Goal", "SampEx_Heur_NoGoal"
-  goal = c(Inf, 100, Inf, 100, Inf), # 100, Inf
-  rule_Imp = c("Mean", "SampExInt", "RL", "RLGoal", "none"), #"SampExHeur", "SampExHeur"
-  rule_Choice = c("Softmax", "Softmax", "Softmax", "Softmax", "none") # "Softmax", "Softmax"
+  model = c("SampEx_Heur_Goal", "NaturalMean", "RL", "RLGoal", "Random", "GoalHeur", "ThreshHeur"), #   "SampEx_Heur_NoGoal", "SampEx_Int_Goal"
+  goal = c(100, Inf, Inf, 100, Inf, 100, 100), # 1100, 00, Inf
+  rule_Imp = c("SampExHeur", "Mean", "RL", "RLGoal", "none", "GoalHeur", "ThreshHeur"), # "SampExHeur",  "SampExInt",
+  rule_Choice = c("Softmax", "Softmax", "Softmax", "Softmax", "none", "e-greedy", "e-greedy") #   "Softmax", "Softmax",
 )
 
 # subj_fits contains all participants and models to be fit
@@ -141,12 +143,10 @@ mle_optim_cluster_fun <- function(i) {
       if(grepl("RLGoal", rule_Imp_i)) {
         
         startp_model <- as.matrix(expand.grid(phi_par_v,        # phi for updating rule 
-                                               alpha_par_v,      # RLGoal impression uses alpha updating
-                                               curvature_par_v,  # for curvature of the utility function
-                                               lambda_par_v))    # loss aversion parameter
+                                               alpha_par_v))    # RLGoal impression uses alpha updating
         
-        low_model <- c(0, 0, 0, 0)
-        up_model  <- c(Inf, 1, 2, Inf)
+        low_model <- c(0, 0)
+        up_model  <- c(Inf, 1)
         
       }
       
@@ -157,7 +157,26 @@ mle_optim_cluster_fun <- function(i) {
         low_model <- c(0)
         up_model  <- c(Inf)
         
-        }
+      }
+      
+      if(grepl("GoalHeur", rule_Imp_i)) {
+        
+        startp_model <- as.matrix(expand.grid(epsilon_par_v))  # epsilon for updating rule 
+        
+        low_model <- c(0)
+        up_model  <- c(1)
+        
+      }
+      
+      if(grepl("ThreshHeur", rule_Imp_i)) {
+        
+        startp_model <- as.matrix(expand.grid(epsilon_par_v,   # epsilon for updating rule 
+                                              threshold_par_v))
+        
+        low_model <- c(0, 0)
+        up_model  <- c(1, Inf)
+        
+      }
       
       
         
@@ -217,8 +236,6 @@ mle_optim_cluster_fun <- function(i) {
          if(grepl("RL", rule_Imp_i)) {
            
            pars_Imp <- pars_model[2]
-           pars_Imp_curvature <- NA
-           pars_Imp_lambda <- NA
            pars_Choice <- pars_model[1]
            bic <- deviance_model + 2 * log(length(dat_subj$selection))
            
@@ -227,20 +244,32 @@ mle_optim_cluster_fun <- function(i) {
          if(grepl("RLGoal", rule_Imp_i)) {
            
            pars_Imp <- pars_model[2]
-           pars_Imp_curvature <- pars_model[3]
-           pars_Imp_lambda <- pars_model[4]
            pars_Choice <- pars_model[1]
-           bic <- deviance_model + 4 * log(length(dat_subj$selection))
+           bic <- deviance_model + 2 * log(length(dat_subj$selection))
            
          }
          
          if(grepl("Mean", rule_Imp_i)){
            
            pars_Imp <- NA
-           pars_Imp_curvature <- NA
-           pars_Imp_lambda <- NA
            pars_Choice <- pars_model[1]
            bic <- deviance_model + 1 * log(length(dat_subj$selection))
+           
+         }
+         
+         if(grepl("GoalHeur", rule_Imp_i)){
+           
+           pars_Imp <- NA
+           pars_Choice <- pars_model[1]
+           bic <- deviance_model + 1 * log(length(dat_subj$selection))
+           
+         }
+         
+         if(grepl("ThreshHeur", rule_Imp_i)){
+           
+           pars_Imp <- pars_model[2]
+           pars_Choice <- pars_model[1]
+           bic <- deviance_model + 2 * log(length(dat_subj$selection))
            
          }
       
@@ -318,8 +347,6 @@ mle_optim_cluster_fun <- function(i) {
                                          prediction = TRUE))
       
       pars_Imp <- which_N
-      pars_Imp_curvature <- NA
-      pars_Imp_lambda <- NA
       pars_Choice <- pars_model[1]
       bic <- deviance_model + 2 * log(length(dat_subj$selection))
       
@@ -337,8 +364,6 @@ mle_optim_cluster_fun <- function(i) {
     pred_model <- mean(sample(1:2, 250, replace = TRUE) == dat_subj$selection)
     
     pars_Imp <- NA
-    pars_Imp_curvature <- NA
-    pars_Imp_lambda <- NA
     pars_Choice <- NA
   }
   
@@ -348,8 +373,6 @@ mle_optim_cluster_fun <- function(i) {
            model = model_i, 
            bic = round(bic, 3),
            pars_Imp_mle = pars_Imp,
-           pars_Imp_curvature_mle = pars_Imp_curvature,
-           pars_Imp_lambda_mle = pars_Imp_lambda,
            pars_Choice_mle = unname(unlist(pars_Choice)),
            pred_mle = pred_model))
   
@@ -360,19 +383,19 @@ mle_optim_cluster_fun <- function(i) {
 # ----------------------------
 
 # Set up cluster
-cores_n <- 4   # Number of cores to run on
+cores_n <- detectCores()  # Number of cores to run on
 cl <- makeCluster(cores_n)
 
 # Send libraries to cluster
-clusterEvalQ(cl, library(tidyverse))
+clusterEvalQ(cl, library(dplyr))
 
 # Export objects to cluster
 clusterExport(cl, list("subj_fits", 
-                       "N_par", "phi_par_v", "alpha_par_v", "curvature_par_v", "lambda_par_v", "phi_par_v_SampEx",
+                       "N_par", "phi_par_v", "alpha_par_v", "epsilon_par_v", "phi_par_v_SampEx", "threshold_par_v",
                        "trial_max", "Goal", "dat", 
                        "Model_Lik_Optim", 
-                       "SampEx_Imp", "RL_Imp", "RLGoal_Imp", "Mean_Imp",
-                       "get_samples", 
+                       "SampEx_Imp", "RL_Imp", "RLGoal_Imp", "Mean_Imp", "GoalHeur", "Thresh_Imp",
+                       "get_samples", "uncor_var", 
                        "Softmax_Choice", 
                        "p_getthere"))
 
@@ -396,8 +419,6 @@ cluster_result_df <- cluster_result_df %>%
   mutate(
     bic = as.numeric(bic),
     pars_Imp_mle = as.numeric(pars_Imp_mle),
-    pars_Imp_curvature_mle = as.numeric(pars_Imp_curvature_mle),
-    pars_Imp_lambda_mle = as.numeric(pars_Imp_lambda_mle),
     pars_Choice_mle = as.numeric(pars_Choice_mle),
     pred_mle = as.numeric(pred_mle)
   )
@@ -415,8 +436,6 @@ model_best <- subj_fits %>%
     model_best = model[bic == min(bic)][1],
     model_best_bic = bic[bic == min(bic)][1],
     model_best_Imp = pars_Imp_mle[bic == min(bic)][1],
-    model_best_Imp_curvature = pars_Imp_curvature_mle[bic == min(bic)][1],
-    model_best_Imp_lambda = pars_Imp_lambda_mle[bic == min(bic)][1],
     model_best_Choice = pars_Choice_mle[bic == min(bic)][1],
     model_best_pred = pred_mle[bic == min(bic)][1]
   )
@@ -429,8 +448,6 @@ if (modelRecovery){
     summarise(
       true_Model = model[1],
       true_Pars_Imp = pars_Imp[1],
-      true_Pars_Imp_curvature = pars_Imp_curvature[1],
-      true_Pars_Imp_lambda = pars_Imp_lambda[1],
       true_Pars_Choice = pars_Choice[1]
     ) %>% 
     ungroup() %>%
@@ -456,7 +473,6 @@ if (modelRecovery){
   
 }
 
-
-
+save.image("ModelFitOptim04.RData")
 Sys.time()
 

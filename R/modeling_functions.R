@@ -1,6 +1,20 @@
+
+
+
 # ---------------------
 # Helper functions
 # ---------------------
+
+
+uncor_var <- function(x){
+  
+  if (!is.null(x) && !any(is.na(x)) && length(x) >= 2){
+    sum((x - mean(x)) ^ 2) / length(x)
+  } else {
+    return(1)
+  }
+  
+}
 
 get_samples <- function(samp,        # samp: History of observations
                         memory_N) {  # memory_N: Memory
@@ -105,6 +119,8 @@ Softmax_Choice <- function(impressions,       # impressions: Vector (or list) of
   
 }
 
+
+
 # ---------------------
 # Impression rules
 # ---------------------
@@ -192,6 +208,30 @@ SampEx_Imp <- function(method_extrap = "heuristic",  # method_extrap: 'heuristic
   
 }
 
+Thresh_Imp <- function(selection_v,   # selection_v: Sequential selections made
+                       outcome_v,     # outcome_v: Sequential outcomes observed
+                       trial_max,     # trial_max: Maximum number of trials
+                       trial_now,     # trial_now: Current trial
+                       points_goal,   # points_goal: Points desired at goal. If Infinite, then impressions is based on mean
+                       points_now){
+  
+  # Points needed
+  points_need <- points_goal - points_now
+  
+  # number of remaining trials
+  trial_rem <- trial_max + 1 - trial_now
+  
+  need <- points_need / trial_rem
+  
+  # get Recent Distribution
+  var_A <- uncor_var(outcome_v[selection_v == 1])
+  var_B <- uncor_var(outcome_v[selection_v == 2])
+  
+  impressions <- c(var_A, var_B)
+  
+  return(list(impressions, need))
+}
+
 
 # mean rule
 Mean_Imp <- function(selection_v,   # selection_v: Sequential selections made
@@ -274,8 +314,6 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
                        selection_v,   # selection_v: Sequential selections made
                        outcome_v,     # outcome_v: Sequential outcomes observed
                        goal = NA,     # Goal
-                       curvature_par = 0.88,   # Curvature of value function
-                       lambda_par = 2.25, # Loss aversion
                        option_n = NULL # option_n: Number of options
 ){
   
@@ -349,17 +387,11 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
         #  In other words, how different is this outcome from the average outcome I need
         #   for the rest of the task to reach the goal?
         
-        points_ref <- data_df$outcome[trial_i] - points_needed / (trial_max - trial_i + 1)
+        current_val <- data_df$outcome[trial_i] - points_needed / (trial_max - trial_i + 1)
         
-        # Transform points_ref via value function
-        if(points_ref > 0) {
-          
-          points_ref <- points_ref ^ curvature_par} else {
-            
-            points_ref <- -lambda_par * ((-points_ref) ^ curvature_par)}
         
         # Update impression
-        imp_new[option_i] <- (1 - alpha_par) * imp_prior[option_i] + alpha_par * points_ref
+        imp_new[option_i] <- (1 - alpha_par) * imp_prior[option_i] + alpha_par * current_val
         
       }
     }
@@ -374,6 +406,33 @@ RLGoal_Imp <- function(alpha_par,     # alpha_par: Updating rate [0, Inf]
   return(impression_final)
   
 }
+
+
+GoalHeur <- function(selection,   # selection: Selection made
+                     outcome,     # outcome: Outcome seen prior to selection
+                     points_cum,  # number of points reached so far
+                     trial,       # current trial
+                     epsilon,     # epsilon: probability of favored option chosen
+                     goal = NA    # Goal
+){
+  
+  
+  pred <- (outcome >= (100 - points_cum) / (26 - trial) & selection == 2) + 1
+    
+  if (pred == 1){
+    
+    selprob_v <- c(epsilon, 1 - epsilon)
+    
+  } else {
+    
+    selprob_v <- c(1 - epsilon, epsilon)
+    
+  }
+  
+  selprob_v
+  
+}
+
 
 
 
@@ -466,16 +525,12 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
         
         # Get memory_N and phi parameter values
         alpha_par <- pars_Imp[1]
-        curvature_par <- pars_Imp[2]
-        lambda_par <- pars_Imp[3]
         
         # Get impressions
         impressions_i <- RLGoal_Imp(alpha_par = alpha_par,
                                     selection_v = selection_v[game_v == game_i & trial_v < trial_i], 
                                     outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
                                     goal = points_goal,
-                                    curvature_par = curvature_par,
-                                    lambda_par = lambda_par,
                                     option_n = option_n)
         
       }
@@ -502,6 +557,7 @@ Model_Lik <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
         
         
       }
+      
       
       # Assign absolute prediction to lik_mtx
       pred_abs <- (1:option_n)[selprob_v == max(selprob_v)]
@@ -647,16 +703,12 @@ Model_Lik_Optim <- function(Q,                # Vector of parameters
         
         # Get memory_N and phi parameter values
         alpha_par <- Q[2]
-        curvature_par <- Q[3]
-        lambda_par <- Q[4]
         
         # Get impressions
         impressions_i <- RLGoal_Imp(alpha_par = alpha_par,
                                     selection_v = selection_v[game_v == game_i & trial_v < trial_i], 
                                     outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
                                     goal = points_goal,
-                                    curvature_par = curvature_par,
-                                    lambda_par = lambda_par,
                                     option_n = option_n)
         
       }
@@ -680,6 +732,91 @@ Model_Lik_Optim <- function(Q,                # Vector of parameters
         selprob_v <- Softmax_Choice(impressions = impressions_i, 
                                     phi = phi_par, 
                                     trial_now = trial_i)
+        
+        
+      }
+      
+      if (rule_Imp == "GoalHeur"){
+        
+        epsilon <- Q[1]
+        
+        if (trial_i == 1){
+          selprob_v <- c(0.5, 0.5)
+        } else {
+        
+        selprob_v <- GoalHeur(selection = selection_v[game_v == game_i & trial_v == trial_i - 1],
+                                outcome = outcome_v[game_v == game_i & trial_v == trial_i - 1],
+                                points_cum = sum(outcome_v[game_v == game_i &
+                                                             trial_v == trial_i - 1]),
+                                trial = trial_i,
+                                epsilon = epsilon,
+                                goal = points_goal)
+        }
+        
+      }
+      
+      if (rule_Imp == "ThreshHeur"){
+        
+        epsilon <- Q[1]
+        threshold <- Q[2]
+        
+        if (trial_i == 1){
+          
+          selprob_v <- c(0.5, 0.5)
+          
+        } else {
+          
+          # Get points_now
+          points_now <- sum(outcome_v[game_v == game_i & trial_v < trial_i])
+          
+          
+          impressions_list <- Thresh_Imp(selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                      outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                      trial_max = trial_max,
+                                      trial_now = trial_i,
+                                      points_goal = points_goal,
+                                      points_now = points_now)
+          
+          if (impressions_list[[1]][1] == impressions_list[[1]][2]){
+            
+            selprob_v <- c(0.5, 0.5)
+            
+          } else if (impressions_list[[2]] <= threshold){
+            
+            # if the need is below the threshhold, favor the LOW variance option
+            
+
+            if (impressions_list[[1]][1] < impressions_list[[1]][2]){
+              
+              selprob_v <- c(epsilon, 1 - epsilon)
+              
+            } else {
+              
+              selprob_v <- c(1 - epsilon, epsilon)
+              
+            }
+              
+            
+            
+          } else {
+            
+            # if the need is above the threshhold, favor the HIGH variance option
+            
+            if (impressions_list[[1]][1] < impressions_list[[1]][2]){
+              
+              selprob_v <- c(1 - epsilon, epsilon)
+              
+            } else {
+              
+              selprob_v <- c(epsilon, 1 - epsilon)
+              
+            }
+            
+          }
+          
+          
+        }
+        
         
         
       }
@@ -825,16 +962,12 @@ Model_Sim <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
         
         # Get memory_N and phi parameter values
         alpha_par <- pars_Imp[1]
-        curvature_par <- pars_Imp[2]
-        lambda_par <- pars_Imp[3]
         
         # Get impressions
         impressions_i <- RLGoal_Imp(alpha_par = alpha_par,
                                     selection_v = selection_v[game_v == game_i & trial_v < trial_i], 
                                     outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
                                     goal = points_goal,
-                                    curvature_par = curvature_par,
-                                    lambda_par = lambda_par,
                                     option_n = option_n)
         
       }
@@ -858,6 +991,92 @@ Model_Sim <- function(rule_Choice,      # rule_Choice: Choice rule [Softmax_Choi
         selprob_v <- Softmax_Choice(impressions = impressions_i, 
                                     phi = phi_par, 
                                     trial_now = trial_i)
+        
+        
+      }
+      
+      
+      if (rule_Imp == "GoalHeur"){
+        
+        epsilon <- pars_Choice[1]
+        
+        if (trial_i == 1){
+          selprob_v <- c(0.5, 0.5)
+        } else {
+          
+          selprob_v <- GoalHeur(selection = selection_v[game_v == game_i & trial_v == trial_i - 1],
+                                outcome = outcome_v[game_v == game_i & trial_v == trial_i - 1],
+                                points_cum = sum(outcome_v[game_v == game_i &
+                                                             trial_v == trial_i - 1]),
+                                trial = trial_i,
+                                epsilon = epsilon,
+                                goal = points_goal)
+        }
+        
+      }
+      
+      if (rule_Imp == "ThreshHeur"){
+        
+        epsilon <- pars_Choice[1]
+        threshold <- pars_Imp[1]
+        
+        if (trial_i == 1){
+          
+          selprob_v <- c(0.5, 0.5)
+          
+        } else {
+          
+          # Get points_now
+          points_now <- sum(outcome_v[game_v == game_i & trial_v < trial_i])
+          
+          
+          impressions_list <- Thresh_Imp(selection_v = selection_v[game_v == game_i & trial_v < trial_i],
+                                         outcome_v = outcome_v[game_v == game_i & trial_v < trial_i],
+                                         trial_max = trial_max,
+                                         trial_now = trial_i,
+                                         points_goal = points_goal,
+                                         points_now = points_now)
+          
+          if (impressions_list[[1]][1] == impressions_list[[1]][2]){
+            
+            selprob_v <- c(0.5, 0.5)
+            
+          } else if (impressions_list[[2]] <= threshold){
+            
+            # if the need is below the threshhold, favor the LOW variance option
+            
+            
+            if (impressions_list[[1]][1] < impressions_list[[1]][2]){
+              
+              selprob_v <- c(epsilon, 1 - epsilon)
+              
+            } else {
+              
+              selprob_v <- c(1 - epsilon, epsilon)
+              
+            }
+            
+            
+            
+          } else {
+            
+            # if the need is above the threshhold, favor the HIGH variance option
+            
+            if (impressions_list[[1]][1] < impressions_list[[1]][2]){
+              
+              selprob_v <- c(1 - epsilon, epsilon)
+              
+            } else {
+              
+              selprob_v <- c(epsilon, 1 - epsilon)
+              
+            }
+            
+          }
+          
+          
+        }
+        
         
         
       }

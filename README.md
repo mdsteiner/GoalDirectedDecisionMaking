@@ -14,7 +14,7 @@ Anonymized experiment data is in the folder *data/Study1Data/useData*. Raw data 
 Logs of the performed exculsions are in the *documents* folder.
 
 ### Data Analysis Code
-R code is in the *R* folder. Analysis scripts used for *Getting what you came for: Decisions under uncertainty with a goal* start with S1_XX_. The does not necessarily mean, that a script of a higher number won't work if not every other script with a lower number was executed before. The Stan code for the quantification of the difference between two proportions of answers given in one question of the survey, is in the *stan* subfolder.
+R code is in the *R* folder. The numbers in front of the scripts indicate the order in which they should be executed such that they work (the first one only needs to be executed once to generate the datasets, since this has already been done 01_dataPreparation.R needs not be executed again). 02_mainAnalysis contains the preliminary analysis script (with some bug fixes), however the in the manuscript reported regressions, which combine the results of several regressions as planned initially in one single mixed effects model, are in 03_RegressionsOnPRisky.R, model fitting is done in 04_Optim_Fit.R.
 
 ### Plots
-Plots from the manuscript as well as many more are as pdfs in the *plot* folder. Finding the right one might take some time, sorry...
+Plots from the manuscript are saved as pdfs in the *plot* folder.
